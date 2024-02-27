@@ -1,7 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"log"
+
+	"github.com/OAuth2withJWT/identity-provider/server"
+)
 
 func main() {
-	fmt.Println("Hello, Identity Provider")
+	s := server.New()
+	log.Fatal(s.Run())
 }
