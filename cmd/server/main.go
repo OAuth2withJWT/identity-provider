@@ -3,17 +3,17 @@ package main
 import (
 	"log"
 
-	"github.com/OAuth2withJWT/identity-provider/internal/db"
+	"github.com/OAuth2withJWT/identity-provider/db"
 	"github.com/OAuth2withJWT/identity-provider/server"
 )
 
 func main() {
-	DB, err := db.InitDB()
+	db, err := db.Connect()
 	if err != nil {
 		log.Fatal("Failed to initialize database: ", err)
 	}
-	defer db.CloseDB()
+	defer db.Close()
 
-	s := server.New(DB)
+	s := server.New(db)
 	log.Fatal(s.Run())
 }

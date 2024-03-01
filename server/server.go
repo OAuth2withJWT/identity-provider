@@ -22,12 +22,12 @@ func New(db *sql.DB) *Server {
 	}
 }
 
-func (server *Server) Run() error {
-	server.r.HandleFunc("/registration", RegistrationFormHandler).Methods("GET")
-	server.r.HandleFunc("/registration", server.RenderingRegistrationDetails).Methods("POST")
+func (s *Server) Run() error {
+	s.r.HandleFunc("/registration", RegistrationFormHandler).Methods("GET")
+	s.r.HandleFunc("/registration", s.RenderingRegistrationDetails).Methods("POST")
 
 	log.Println("Server started on port 8080")
-	return http.ListenAndServe(":8080", server.r)
+	return http.ListenAndServe(":8080", s.r)
 }
 
 type User struct {
