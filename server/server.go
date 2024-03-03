@@ -1,35 +1,46 @@
 package server
 
 import (
+	"database/sql"
 	"html/template"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Server struct {
-	r *mux.Router
+	r  *mux.Router
+	db *sql.DB
 }
 
-func New() *Server {
+func New(db *sql.DB) *Server {
 	return &Server{
-		r: mux.NewRouter(),
+		r:  mux.NewRouter(),
+		db: db,
 	}
 }
 
-func (server *Server) Run() error {
-	server.r.HandleFunc("/registration", RegistrationFormHandler).Methods("GET")
-	server.r.HandleFunc("/registration", RenderingRegistrationDetails).Methods("POST")
+func (s *Server) Run() error {
+	s.r.HandleFunc("/registration", RegistrationFormHandler).Methods("GET")
+	s.r.HandleFunc("/registration", s.RenderingRegistrationDetails).Methods("POST")
 
 	log.Println("Server started on port 8080")
-	return http.ListenAndServe(":8080", server.r)
+	return http.ListenAndServe(":8080", s.r)
 }
 
 type User struct {
-	Email    string
-	Username string
-	Password string
+	FirstName string
+	LastName  string
+	Email     string
+	Username  string
+	Password  string
+}
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	return string(bytes), err
 }
 
 func RegistrationFormHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,17 +52,30 @@ func RegistrationFormHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func RenderingRegistrationDetails(w http.ResponseWriter, r *http.Request) {
+func (s *Server) RenderingRegistrationDetails(w http.ResponseWriter, r *http.Request) {
 	registrationDetails := User{
-		Email:    r.FormValue("email"),
-		Username: r.FormValue("username"),
-		Password: r.FormValue("password"),
+		FirstName: r.FormValue("firstName"),
+		LastName:  r.FormValue("lastName"),
+		Email:     r.FormValue("email"),
+		Username:  r.FormValue("username"),
 	}
 
-	_ = registrationDetails
+	hashedPassword, err := HashPassword(r.FormValue("password"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	registrationDetails.Password = hashedPassword
+
+	_, err = s.db.Query("INSERT INTO users (first_name, last_name, email, username, password) VALUES ($1, $2, $3, $4, $5)",
+		registrationDetails.FirstName, registrationDetails.LastName, registrationDetails.Email, registrationDetails.Username, registrationDetails.Password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	tmpl, _ := template.ParseFiles("views/registration.html")
-	err := tmpl.Execute(w, struct{ Success bool }{true})
+	err = tmpl.Execute(w, struct{ Success bool }{true})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
