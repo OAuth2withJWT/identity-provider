@@ -6,8 +6,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//nema pojma za db i web
-
 type Application struct {
 	UserService *UserService
 }
@@ -48,16 +46,11 @@ func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	_, err = s.db.Exec("INSERT INTO users (first_name, last_name, email, username, password) VALUES ($1, $2, $3, $4, $5)",
+	row := s.db.QueryRow("INSERT INTO users (first_name, last_name, email, username, password) VALUES ($1, $2, $3, $4, $5) RETURNING first_name, last_name, email, username, password",
 		req.FirstName, req.LastName, req.Email, req.Username, hashedPassword)
 
-	if err != nil {
-		return nil, err
-	}
-
 	user := &User{}
-	err = s.db.QueryRow("SELECT first_name, last_name, email, username, password FROM users WHERE email = $1", req.Email).Scan(
-		&user.FirstName, &user.LastName, &user.Email, &user.Username, &user.Password)
+	err = row.Scan(&user.FirstName, &user.LastName, &user.Email, &user.Username, &user.Password)
 	if err != nil {
 		return nil, err
 	}

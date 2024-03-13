@@ -10,14 +10,14 @@ import (
 )
 
 type Server struct {
-	router      *mux.Router
-	userService *app.UserService
+	router *mux.Router
+	app    *app.Application
 }
 
-func New(s *app.Application) *Server {
+func New(a *app.Application) *Server {
 	return &Server{
-		router:      mux.NewRouter(),
-		userService: s.UserService,
+		router: mux.NewRouter(),
+		app:    a,
 	}
 }
 
@@ -45,7 +45,7 @@ func (s *Server) RenderingRegistrationDetails(w http.ResponseWriter, r *http.Req
 		Email:     r.FormValue("email"),
 		Username:  r.FormValue("username"),
 	}
-	user, err := s.userService.Create(req)
+	user, err := s.app.UserService.Create(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
