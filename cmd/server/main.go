@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
+	"github.com/OAuth2withJWT/identity-provider/app/postgres"
 	"github.com/OAuth2withJWT/identity-provider/db"
 	"github.com/OAuth2withJWT/identity-provider/server"
 )
@@ -15,8 +16,10 @@ func main() {
 	}
 	defer db.Close()
 
+	userRepository := postgres.NewUserRepository(db)
+
 	app := app.Application{
-		UserService: app.NewUserService(db),
+		UserService: app.NewUserService(userRepository),
 	}
 	s := server.New(&app)
 
