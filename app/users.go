@@ -29,7 +29,12 @@ type CreateUserRequest struct {
 }
 
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
+	hashedPassword, err := HashPassword(req.Password)
+	if err != nil {
+		return nil, err
+	}
 
+	req.Password = hashedPassword
 	user, err := s.repository.Create(req)
 
 	if err != nil {
