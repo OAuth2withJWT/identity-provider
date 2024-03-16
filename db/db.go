@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -29,6 +30,27 @@ func Connect() (*sql.DB, error) {
 	}
 
 	return db, nil
+}
+
+func Setup(db *sql.DB) error {
+	sqlFile, err := os.ReadFile("scheme.sql")
+	if err != nil {
+		log.Fatalf("Error reading SQL file: %v", err)
+	}
+
+	sqlFileContent := string(sqlFile)
+
+	queries := strings.Split(sqlFileContent, ";")
+	for _, query := range queries {
+		var trimmedQuery = strings.TrimSpace(query)
+		if trimmedQuery != "" {
+			_, err := db.Exec(trimmedQuery)
+			if err != nil {
+				log.Fatalf("Error executing SQL query: %v", err)
+			}
+		}
+	}
+	return nil
 }
 
 func getEnvVariable(key string) string {
