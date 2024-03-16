@@ -33,7 +33,7 @@ func Connect() (*sql.DB, error) {
 }
 
 func Setup(db *sql.DB) error {
-	sqlFile, err := os.ReadFile("scheme.sql")
+	sqlFile, err := os.ReadFile("db/scheme.sql")
 	if err != nil {
 		log.Fatalf("Error reading SQL file: %v", err)
 	}
