@@ -9,3 +9,7 @@ test:
 .PHONY: clean
 clean:
 	rm -rf ./build
+
+.PHONY: run
+run:
+	go run cmd/server/main.go
