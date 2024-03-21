@@ -1,0 +1,15 @@
+root = "."
+
+directories = ["."]
+
+[build]
+  cmd = "make build"
+  bin = "./build/server"
+
+[run]
+  cmd = "./build/server"
+  args = []
+
+[build.watch]
+  extensions = ["go", "html", "css", "sql"]
+
