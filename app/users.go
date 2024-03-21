@@ -1,6 +1,8 @@
 package app
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
+)
 
 type UserService struct {
 	repository UserRepository
@@ -46,16 +48,22 @@ func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 }
 
 func (s *UserService) Authenticate(username, password string) (int, error) {
-	userID, err := s.repository.Authenticate(username, password)
+	userID, hashedPassword, err := s.repository.Authenticate(username, password)
 	if err != nil {
 		return 0, err
 	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		return 0, err
+	}
+
 	return userID, nil
 }
 
 type UserRepository interface {
 	Create(CreateUserRequest) (*User, error)
-	Authenticate(username, password string) (int, error)
+	Authenticate(username, password string) (int, string, error)
 }
 
 func HashPassword(password string) (string, error) {

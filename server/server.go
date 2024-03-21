@@ -48,6 +48,7 @@ func (s *Server) RenderingRegistrationDetails(w http.ResponseWriter, r *http.Req
 		LastName:  r.FormValue("lastName"),
 		Email:     r.FormValue("email"),
 		Username:  r.FormValue("username"),
+		Password:  r.FormValue("password"),
 	}
 	user, err := s.app.UserService.Create(req)
 	if err != nil {
