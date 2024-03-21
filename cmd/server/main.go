@@ -19,7 +19,8 @@ func main() {
 	userRepository := postgres.NewUserRepository(db)
 
 	app := app.Application{
-		UserService: app.NewUserService(userRepository),
+		UserService:    app.NewUserService(userRepository),
+		SessionService: app.NewSessionService(db),
 	}
 	s := server.New(&app)
 

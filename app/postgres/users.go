@@ -28,3 +28,12 @@ func (ur *UserRepository) Create(req app.CreateUserRequest) (*app.User, error) {
 
 	return user, nil
 }
+
+func (ur *UserRepository) Authenticate(username, password string) (int, error) {
+	var userID int
+	err := ur.db.QueryRow("SELECT id FROM users WHERE username = $1 AND password = $2", username, password).Scan(&userID)
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}

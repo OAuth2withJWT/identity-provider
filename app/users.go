@@ -13,6 +13,7 @@ func NewUserService(ur UserRepository) *UserService {
 }
 
 type User struct {
+	UserId    int
 	FirstName string
 	LastName  string
 	Email     string
@@ -44,8 +45,17 @@ func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 	return user, nil
 }
 
+func (s *UserService) Authenticate(username, password string) (int, error) {
+	userID, err := s.repository.Authenticate(username, password)
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
 type UserRepository interface {
 	Create(CreateUserRequest) (*User, error)
+	Authenticate(username, password string) (int, error)
 }
 
 func HashPassword(password string) (string, error) {
