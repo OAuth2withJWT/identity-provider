@@ -1,53 +1,71 @@
 package app
 
 import (
-	"database/sql"
-	"net/http"
-	"strconv"
+	"crypto/rand"
+	"encoding/base64"
 	"time"
 )
 
+const SessionDurationInHours = 24
+
 type Session struct {
+	Id        int
 	UserId    int
-	SessionId int
+	SessionId string
 	ExpiresAt time.Time
 }
 
 type SessionService struct {
-	db *sql.DB
+	repository SessionRepository
 }
 
-func NewSessionService(db *sql.DB) *SessionService {
+func NewSessionService(sr SessionRepository) *SessionService {
 	return &SessionService{
-		db: db,
+		repository: sr,
 	}
 }
 
-func (s *SessionService) SaveSession(userID int, expiresAt time.Time) (int, error) {
-	var sessionID int
-	err := s.db.QueryRow("INSERT INTO sessions (user_id, expires_at) VALUES ($1, $2) RETURNING session_id", userID, expiresAt).Scan(&sessionID)
+type SessionRepository interface {
+	CreateSession(sessionID string, userID int, expiresAt time.Time) (string, error)
+	GetSessionByID(sessionID string) (Session, error)
+}
+
+func (s *SessionService) ValidateSession(sessionID string) (Session, error) {
+	session, err := s.GetSessionByID(sessionID)
 	if err != nil {
-		return 0, err
+		return Session{}, err
+	}
+	if session.SessionId == "" || session.ExpiresAt.Before(time.Now()) {
+		return Session{}, err
+	}
+	return session, nil
+}
+
+func (s *SessionService) GenerateSessionID() (string, error) {
+	randomBytes := make([]byte, 32)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(randomBytes), nil
+}
+
+func (s *SessionService) CreateSession(userID int, expiresAt time.Time) (string, error) {
+	sessionID, err := s.GenerateSessionID()
+	if err != nil {
+		return "", err
+	}
+	sessionID, err = s.repository.CreateSession(sessionID, userID, expiresAt)
+	if err != nil {
+		return "", err
 	}
 	return sessionID, nil
 }
 
-func (s *SessionService) SetSessionCookie(w http.ResponseWriter, sessionID int) {
-	http.SetCookie(w, &http.Cookie{
-		Name:    "session_id",
-		Value:   strconv.Itoa(sessionID),
-		Expires: time.Now().Add(24 * time.Hour),
-	})
-}
-
-func (s *SessionService) GetSessionIDFromCookie(r *http.Request) int {
-	cookie, err := r.Cookie("session_id")
+func (s *SessionService) GetSessionByID(sessionID string) (Session, error) {
+	session, err := s.repository.GetSessionByID(sessionID)
 	if err != nil {
-		return 0
+		return Session{}, err
 	}
-	sessionID, err := strconv.Atoi(cookie.Value)
-	if err != nil {
-		return 0
-	}
-	return sessionID
+	return session, nil
 }

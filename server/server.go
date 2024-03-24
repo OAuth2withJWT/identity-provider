@@ -27,7 +27,7 @@ func (s *Server) Run() error {
 	s.router.HandleFunc("/registration", s.RenderingRegistrationDetails).Methods("POST")
 	s.router.HandleFunc("/login", s.LoginFormHandler).Methods("GET")
 	s.router.HandleFunc("/login", s.LoginHandler).Methods("POST")
-	s.router.HandleFunc("/homepage", HomePageHandler).Methods("GET")
+	s.router.HandleFunc("/", s.HomePageHandler).Methods("GET")
 
 	log.Println("Server started on port 8080")
 	return http.ListenAndServe(":8080", s.router)
@@ -68,9 +68,23 @@ func (s *Server) RenderingRegistrationDetails(w http.ResponseWriter, r *http.Req
 	}
 }
 
-func HomePageHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HomePageHandler(w http.ResponseWriter, r *http.Request) {
+	sessionID := GetSessionIDFromCookie(r)
+	session, err := s.app.SessionService.ValidateSession(sessionID)
+
+	var username string
+
+	if err == nil {
+		user, err := s.app.UserService.GetUserByID(session.UserId)
+		if err == nil {
+			username = user.Username
+		}
+	}
 	tmpl, _ := template.ParseFiles("views/homepage.html")
-	err := tmpl.Execute(w, nil)
+	err = tmpl.Execute(w, struct {
+		Username string
+	}{username})
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -78,26 +92,27 @@ func HomePageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) LoginFormHandler(w http.ResponseWriter, r *http.Request) {
-	sessionID := s.app.SessionService.GetSessionIDFromCookie(r)
+	sessionID := GetSessionIDFromCookie(r)
+	_, err := s.app.SessionService.ValidateSession(sessionID)
 
-	if sessionID != 0 {
-		http.Redirect(w, r, "/homepage", http.StatusFound)
-	}
-
-	tmpl, _ := template.ParseFiles("views/login.html")
-	err := tmpl.Execute(w, nil)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		tmpl, _ := template.ParseFiles("views/login.html")
+		err := tmpl.Execute(w, nil)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		return
 	}
+
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
-
-	username := r.FormValue("username")
+	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	userID, err := s.app.UserService.Authenticate(username, password)
+	user, err := s.app.UserService.ValidateUserCredentials(email, password)
 	if err != nil {
 		tmpl, err := template.ParseFiles("views/login.html")
 		if err != nil {
@@ -107,7 +122,7 @@ func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		data := struct {
 			ErrorMessage string
 		}{
-			ErrorMessage: "Invalid username or password",
+			ErrorMessage: "Invalid email or password",
 		}
 		err = tmpl.Execute(w, data)
 		if err != nil {
@@ -117,13 +132,29 @@ func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionID, err := s.app.SessionService.SaveSession(userID, time.Now().Add(24*time.Hour))
+	sessionID, err := s.app.SessionService.CreateSession(user.UserId, time.Now().Add(app.SessionDurationInHours*time.Hour))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	s.app.SessionService.SetSessionCookie(w, sessionID)
+	SetSessionCookie(w, sessionID)
+	http.Redirect(w, r, "/", http.StatusFound)
+}
 
-	http.Redirect(w, r, "/homepage", http.StatusFound)
+func SetSessionCookie(w http.ResponseWriter, sessionID string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_id",
+		Value:   sessionID,
+		Expires: time.Now().Add(app.SessionDurationInHours * time.Hour),
+	})
+}
+
+func GetSessionIDFromCookie(r *http.Request) string {
+	cookie, err := r.Cookie("session_id")
+	if err != nil {
+		return ""
+	}
+	sessionID := cookie.Value
+	return sessionID
 }

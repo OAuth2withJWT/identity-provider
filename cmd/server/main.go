@@ -17,10 +17,11 @@ func main() {
 	defer db.Close()
 
 	userRepository := postgres.NewUserRepository(db)
+	sessionRepository := postgres.NewSessionRepository(db)
 
 	app := app.Application{
 		UserService:    app.NewUserService(userRepository),
-		SessionService: app.NewSessionService(db),
+		SessionService: app.NewSessionService(sessionRepository),
 	}
 	s := server.New(&app)
 
