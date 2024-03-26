@@ -23,7 +23,7 @@ func New(a *app.Application) *Server {
 }
 
 func (s *Server) Run() error {
-	s.router.HandleFunc("/registration", RegistrationFormHandler).Methods("GET")
+	s.router.HandleFunc("/registration", s.RegistrationFormHandler).Methods("GET")
 	s.router.HandleFunc("/registration", s.RenderingRegistrationDetails).Methods("POST")
 	s.router.HandleFunc("/login", s.LoginFormHandler).Methods("GET")
 	s.router.HandleFunc("/login", s.LoginHandler).Methods("POST")
@@ -33,9 +33,16 @@ func (s *Server) Run() error {
 	return http.ListenAndServe(":8080", s.router)
 }
 
-func RegistrationFormHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) RegistrationFormHandler(w http.ResponseWriter, r *http.Request) {
+	sessionID := GetSessionIDFromCookie(r)
+	_, err := s.app.SessionService.ValidateSession(sessionID)
+
+	if err == nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+
 	tmpl, _ := template.ParseFiles("views/registration.html")
-	err := tmpl.Execute(w, nil)
+	err = tmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
