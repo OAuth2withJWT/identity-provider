@@ -144,9 +144,12 @@ func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func SetSessionCookie(w http.ResponseWriter, sessionID string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:    "session_id",
-		Value:   sessionID,
-		Expires: time.Now().Add(app.SessionDurationInHours * time.Hour),
+		Name:     "session_id",
+		Value:    sessionID,
+		Expires:  time.Now().Add(app.SessionDurationInHours * time.Hour),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 	})
 }
 
