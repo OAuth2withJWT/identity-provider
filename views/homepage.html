@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Home Page</title>
+</head>
+
+<body>
+    {{ if .Username }}
+    <h1>Welcome, {{ .Username }}!</h1>
+    {{ else }}
+    <h1>Welcome!</h1>
+    {{ end }}
+</body>
+
+</html>
