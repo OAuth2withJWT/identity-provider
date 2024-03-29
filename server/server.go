@@ -33,26 +33,6 @@ func (s *Server) Run() error {
 	return http.ListenAndServe(":8080", s.router)
 }
 
-func (s *Server) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sessionID := GetSessionIDFromCookie(r)
-	if sessionID != "" {
-		err := s.app.SessionService.UpdateFlag(sessionID)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		http.SetCookie(w, &http.Cookie{
-			Name:     "session_id",
-			Value:    "",
-			Expires:  time.Now().AddDate(0, 0, -1),
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteStrictMode,
-		})
-	}
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
 func (s *Server) RegistrationFormHandler(w http.ResponseWriter, r *http.Request) {
 	sessionID := GetSessionIDFromCookie(r)
 	_, err := s.app.SessionService.ValidateSession(sessionID)
@@ -169,6 +149,20 @@ func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func (s *Server) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	sessionID := GetSessionIDFromCookie(r)
+	_, err := s.app.SessionService.ValidateSession(sessionID)
+	if err == nil {
+		err := s.app.SessionService.UpdateFlag(sessionID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		DeleteCookie(w, sessionID)
+	}
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 func SetSessionCookie(w http.ResponseWriter, sessionID string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
@@ -176,6 +170,17 @@ func SetSessionCookie(w http.ResponseWriter, sessionID string) {
 		Expires:  time.Now().Add(app.SessionDurationInHours * time.Hour),
 		Secure:   true,
 		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+}
+
+func DeleteCookie(w http.ResponseWriter, sessionID string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Expires:  time.Now().AddDate(0, 0, -1),
+		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 	})
 }
