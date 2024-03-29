@@ -25,6 +25,15 @@ func (sr *SessionRepository) CreateSession(sessionID string, userID int, expires
 	return sessionID, nil
 }
 
+func (sr *SessionRepository) UpdateFlag(sessionID string) error {
+	query := `UPDATE sessions SET status = 'inactive' WHERE session_id = $1`
+	_, err := sr.db.Exec(query, sessionID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (sr *SessionRepository) GetSessionByID(sessionID string) (app.Session, error) {
 	var session app.Session
 	err := sr.db.QueryRow("SELECT id, session_id, user_id, expires_at FROM sessions WHERE session_id = $1", sessionID).Scan(&session.Id, &session.SessionId, &session.UserId, &session.ExpiresAt)
