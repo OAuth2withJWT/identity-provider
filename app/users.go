@@ -1,8 +1,8 @@
 package app
 
 import (
-	"regexp"
 	"strings"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -91,59 +91,39 @@ func fieldsNotEmpty(req CreateUserRequest) string {
 }
 
 func validatePassword(password string) string {
-	isValid := true
-	errorMessage := "Password must contain at least "
-	if len(password) < 8 {
-		if !isValid {
-			errorMessage += ", "
-		} else {
-			isValid = false
-		}
-		errorMessage += "8 characters"
+	var errors []string
+
+	rules := map[string]func(string) bool{
+		"at least 8 characters": func(s string) bool { return len(s) >= 8 },
+		"one uppercase letter":  func(s string) bool { return containsType(s, unicode.IsUpper) },
+		"one lowercase letter":  func(s string) bool { return containsType(s, unicode.IsLower) },
+		"one digit":             func(s string) bool { return containsType(s, unicode.IsDigit) },
+		"one special character": func(s string) bool { return containsSpecialChar(s) },
 	}
 
-	hasUppercase := strings.ContainsAny(password, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	if !hasUppercase {
-		if !isValid {
-			errorMessage += ", "
-		} else {
-			isValid = false
+	for rule, isValid := range rules {
+		if !isValid(password) {
+			errors = append(errors, rule)
 		}
-		errorMessage += "one uppercase letter"
 	}
 
-	hasLowercase := strings.ContainsAny(password, "abcdefghijklmnopqrstuvwxyz")
-	if !hasLowercase {
-		if !isValid {
-			errorMessage += ", "
-		} else {
-			isValid = false
-		}
-		errorMessage += "one lowercase letter"
-	}
+	return "Password must contain " + strings.Join(errors, ", ")
+}
 
-	hasDigit, _ := regexp.MatchString(`\d`, password)
-	if !hasDigit {
-		if !isValid {
-			errorMessage += ", "
-		} else {
-			isValid = false
+func containsType(s string, check func(rune) bool) bool {
+	for _, char := range s {
+		if check(char) {
+			return true
 		}
-		errorMessage += "one digit"
 	}
+	return false
+}
 
-	hasSpecialChar, _ := regexp.MatchString(`[\W_]`, password)
-	if !hasSpecialChar {
-		if !isValid {
-			errorMessage += ", "
-		} else {
-			isValid = false
+func containsSpecialChar(s string) bool {
+	for _, char := range s {
+		if unicode.IsPunct(char) || unicode.IsSymbol(char) {
+			return true
 		}
-		errorMessage += "one special character"
 	}
-
-	if isValid {
-		return ""
-	}
-	return errorMessage
+	return false
 }
