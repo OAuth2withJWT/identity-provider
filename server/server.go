@@ -27,10 +27,30 @@ func (s *Server) Run() error {
 	s.router.HandleFunc("/registration", s.RenderingRegistrationDetails).Methods("POST")
 	s.router.HandleFunc("/login", s.LoginFormHandler).Methods("GET")
 	s.router.HandleFunc("/login", s.LoginHandler).Methods("POST")
+	s.router.HandleFunc("/logout", s.LogoutHandler).Methods("POST")
 	s.router.HandleFunc("/", s.HomePageHandler).Methods("GET")
-
 	log.Println("Server started on port 8080")
 	return http.ListenAndServe(":8080", s.router)
+}
+
+func (s *Server) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	sessionID := GetSessionIDFromCookie(r)
+	if sessionID != "" {
+		err := s.app.SessionService.UpdateFlag(sessionID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session_id",
+			Value:    "",
+			Expires:  time.Now().AddDate(0, 0, -1),
+			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
+		})
+	}
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func (s *Server) RegistrationFormHandler(w http.ResponseWriter, r *http.Request) {
