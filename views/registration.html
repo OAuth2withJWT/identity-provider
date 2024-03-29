@@ -1,18 +1,39 @@
-{{if .Success}}
-<h1>Hello, {{.Username}}! You have been successfully registered!</h1>
-{{else}}
-<h1>Registration</h1>
-<form method="POST">
-    <label>First name:</label><br />
-    <input type="text" name="firstName" id="firstName"><br />
-    <label>Last name:</label><br />
-    <input type="text" name="lastName" id="lastName"><br />
-    <label>Email:</label><br />
-    <input type="text" name="email" id="email"><br />
-    <label>Username:</label><br />
-    <input type="text" name="username" id="username"><br />
-    <label>Password:</label><br />
-    <input type="password" name="password" id="password"><br />
-    <input type="Submit">
-</form>
-{{end}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/public/form.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-wrapper">
+            <div class="form-container">
+                <div class="heading">
+                    <h2>Register</h2>
+                </div>
+                {{ if .ErrorMessage }}
+                    <div class="error-message">
+                        <p>{{ .ErrorMessage }}</p>
+                    </div>
+                {{ end }}
+                <form method="POST">
+                    <label>First name:</label><br />
+                    <input type="text" name="firstName" id="firstName"><br />
+                    <label>Last name:</label><br />
+                    <input type="text" name="lastName" id="lastName"><br />
+                    <label>Email:</label><br />
+                    <input type="text" name="email" id="email"><br />
+                    <label>Username:</label><br />
+                    <input type="text" name="username" id="username"><br />
+                    <label>Password:</label><br />
+                    <input type="password" name="password" id="password"><br />
+                    <input type="Submit">
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
