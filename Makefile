@@ -29,6 +29,6 @@ migration_down:
 
 .PHONY: create_migration
 create_migration:
-	migrate create -ext sql -dir /db/migrations  $(NAME)
+	migrate create -ext sql -dir db/migrations  $(NAME)
 
 	
