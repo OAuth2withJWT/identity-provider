@@ -28,3 +28,21 @@ func (ur *UserRepository) Create(req app.CreateUserRequest) (*app.User, error) {
 
 	return user, nil
 }
+
+func (ur *UserRepository) GetUserByEmail(email string) (app.User, error) {
+	var user app.User
+	err := ur.db.QueryRow("SELECT * FROM users WHERE email = $1", email).Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Email, &user.Username, &user.Password)
+	if err != nil {
+		return app.User{}, err
+	}
+	return user, nil
+}
+
+func (ur *UserRepository) GetUserByID(user_id int) (app.User, error) {
+	var user app.User
+	err := ur.db.QueryRow("SELECT * FROM users WHERE id = $1", user_id).Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Email, &user.Username, &user.Password)
+	if err != nil {
+		return app.User{}, err
+	}
+	return user, nil
+}
