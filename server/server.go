@@ -23,6 +23,8 @@ func New(a *app.Application) *Server {
 }
 
 func (s *Server) Run() error {
+	s.router.PathPrefix("/public/").Handler(http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
+
 	s.router.HandleFunc("/registration", s.RegistrationFormHandler).Methods("GET")
 	s.router.HandleFunc("/registration", s.RenderingRegistrationDetails).Methods("POST")
 	s.router.HandleFunc("/login", s.LoginFormHandler).Methods("GET")
@@ -49,6 +51,24 @@ func (s *Server) RegistrationFormHandler(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+func HomePageHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, _ := template.ParseFiles("views/index.html")
+	err := tmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func LoginFormHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl, _ := template.ParseFiles("views/login.html")
+	err := tmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func (s *Server) RenderingRegistrationDetails(w http.ResponseWriter, r *http.Request) {
 	req := app.CreateUserRequest{
 		FirstName: r.FormValue("firstName"),
@@ -57,22 +77,29 @@ func (s *Server) RenderingRegistrationDetails(w http.ResponseWriter, r *http.Req
 		Username:  r.FormValue("username"),
 		Password:  r.FormValue("password"),
 	}
-	user, err := s.app.UserService.Create(req)
+
+	_, err := s.app.UserService.Create(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		var errorMessage string
+		if fieldErr, ok := err.(*app.FieldError); ok {
+			errorMessage = fieldErr.Message
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		data := struct {
+			ErrorMessage string
+		}{ErrorMessage: errorMessage}
+
+		tmpl, _ := template.ParseFiles("views/registration.html")
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
-	tmpl, _ := template.ParseFiles("views/registration.html")
-	err = tmpl.Execute(w, struct {
-		Success  bool
-		Username string
-	}{true, user.Username})
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	http.Redirect(w, r, "/login", http.StatusFound)
 }
 
 func (s *Server) HomePageHandler(w http.ResponseWriter, r *http.Request) {
