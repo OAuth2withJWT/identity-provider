@@ -28,6 +28,15 @@ func NewSessionService(sr SessionRepository) *SessionService {
 type SessionRepository interface {
 	CreateSession(sessionID string, userID int, expiresAt time.Time) (string, error)
 	GetSessionByID(sessionID string) (Session, error)
+	UpdateStatus(sessionID string) error
+}
+
+func (s *SessionService) UpdateStatus(sessionID string) error {
+	err := s.repository.UpdateStatus(sessionID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *SessionService) ValidateSession(sessionID string) (Session, error) {

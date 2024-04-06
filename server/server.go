@@ -27,8 +27,8 @@ func (s *Server) Run() error {
 	s.router.HandleFunc("/registration", s.RenderingRegistrationDetails).Methods("POST")
 	s.router.HandleFunc("/login", s.LoginFormHandler).Methods("GET")
 	s.router.HandleFunc("/login", s.LoginHandler).Methods("POST")
+	s.router.HandleFunc("/logout", s.LogoutHandler).Methods("POST")
 	s.router.HandleFunc("/", s.HomePageHandler).Methods("GET")
-
 	log.Println("Server started on port 8080")
 	return http.ListenAndServe(":8080", s.router)
 }
@@ -149,6 +149,20 @@ func (s *Server) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
+func (s *Server) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	sessionID := GetSessionIDFromCookie(r)
+	_, err := s.app.SessionService.ValidateSession(sessionID)
+	if err == nil {
+		err := s.app.SessionService.UpdateStatus(sessionID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		DeleteCookie(w, sessionID)
+	}
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
 func SetSessionCookie(w http.ResponseWriter, sessionID string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
@@ -156,6 +170,17 @@ func SetSessionCookie(w http.ResponseWriter, sessionID string) {
 		Expires:  time.Now().Add(app.SessionDurationInHours * time.Hour),
 		Secure:   true,
 		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+}
+
+func DeleteCookie(w http.ResponseWriter, sessionID string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_id",
+		Value:    "",
+		Expires:  time.Now().AddDate(0, 0, -1),
+		HttpOnly: true,
+		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
 	})
 }
