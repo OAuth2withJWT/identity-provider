@@ -25,7 +25,7 @@ func (sr *SessionRepository) CreateSession(sessionID string, userID int, expires
 	return sessionID, nil
 }
 
-func (sr *SessionRepository) UpdateFlag(sessionID string) error {
+func (sr *SessionRepository) UpdateStatus(sessionID string) error {
 	query := `UPDATE sessions SET status = 'inactive' WHERE session_id = $1`
 	_, err := sr.db.Exec(query, sessionID)
 	if err != nil {

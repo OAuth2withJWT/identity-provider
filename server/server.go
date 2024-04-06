@@ -153,7 +153,7 @@ func (s *Server) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	sessionID := GetSessionIDFromCookie(r)
 	_, err := s.app.SessionService.ValidateSession(sessionID)
 	if err == nil {
-		err := s.app.SessionService.UpdateFlag(sessionID)
+		err := s.app.SessionService.UpdateStatus(sessionID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
