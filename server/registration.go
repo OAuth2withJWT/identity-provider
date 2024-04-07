@@ -51,6 +51,7 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		return
 	}
 
 	http.Redirect(w, r, "/login", http.StatusFound)
