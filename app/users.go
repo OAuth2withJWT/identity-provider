@@ -142,7 +142,11 @@ func validatePassword(password string) string {
 		}
 	}
 
-	return "Password must contain " + strings.Join(errors, ", ")
+	if len(errors) > 0 {
+		return "Password must contain " + strings.Join(errors, ", ")
+	}
+
+	return ""
 }
 
 func containsType(s string, check func(rune) bool) bool {
