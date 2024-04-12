@@ -1,9 +1,7 @@
 package app
 
 import (
-	"strings"
-	"unicode"
-
+	"github.com/OAuth2withJWT/identity-provider/app/validation"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -42,15 +40,35 @@ func (e *FieldError) Error() string {
 	return e.Message
 }
 
+func (req *CreateUserRequest) Validate() string {
+	v := &validation.Validator{}
+	v.Errors = make(map[string]error)
+
+	v.IsEmpty(req.FirstName)
+	v.IsEmpty(req.LastName)
+	v.IsEmpty(req.Username)
+	v.IsEmpty(req.Email)
+	v.IsEmpty(req.Password)
+	v.IsEmail("email", req.Email)
+	v.IsValidPassword("password", req.Password)
+
+	return v.Error()
+}
+
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
-	ErrorMessage := fieldsNotEmpty(req)
-	if ErrorMessage != "" {
-		return nil, &FieldError{Message: ErrorMessage}
+	errorMessage := req.Validate()
+	if errorMessage != "" {
+		return nil, &FieldError{Message: errorMessage}
 	}
 
-	ErrorMessage = validatePassword(req.Password)
-	if ErrorMessage != "" {
-		return nil, &FieldError{Message: ErrorMessage}
+	user, err := s.repository.GetUserByEmail(req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	if user != (User{}) {
+		errorMessage = "User with that email already exists"
+		return nil, &FieldError{Message: errorMessage}
 	}
 
 	hashedPassword, err := HashPassword(req.Password)
@@ -59,13 +77,13 @@ func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 	}
 
 	req.Password = hashedPassword
-	user, err := s.repository.Create(req)
+	newUser, err := s.repository.Create(req)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return newUser, nil
 }
 
 func (s *UserService) ValidateUserCredentials(email, password string) (User, error) {
@@ -109,60 +127,4 @@ func (s *UserService) GetUserByID(user_id int) (User, error) {
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
-}
-
-func fieldsNotEmpty(req CreateUserRequest) string {
-	firstName := strings.TrimSpace(req.FirstName)
-	lastName := strings.TrimSpace(req.LastName)
-	email := strings.TrimSpace(req.Email)
-	username := strings.TrimSpace(req.Username)
-	password := req.Password
-
-	if firstName == "" || lastName == "" || email == "" || username == "" || password == "" {
-		return "Fields cannot be empty"
-	}
-
-	return ""
-}
-
-func validatePassword(password string) string {
-	var errors []string
-
-	rules := map[string]func(string) bool{
-		"at least 8 characters": func(s string) bool { return len(s) >= 8 },
-		"one uppercase letter":  func(s string) bool { return containsType(s, unicode.IsUpper) },
-		"one lowercase letter":  func(s string) bool { return containsType(s, unicode.IsLower) },
-		"one digit":             func(s string) bool { return containsType(s, unicode.IsDigit) },
-		"one special character": func(s string) bool { return containsSpecialChar(s) },
-	}
-
-	for rule, isValid := range rules {
-		if !isValid(password) {
-			errors = append(errors, rule)
-		}
-	}
-
-	if len(errors) > 0 {
-		return "Password must contain " + strings.Join(errors, ", ")
-	}
-
-	return ""
-}
-
-func containsType(s string, check func(rune) bool) bool {
-	for _, char := range s {
-		if check(char) {
-			return true
-		}
-	}
-	return false
-}
-
-func containsSpecialChar(s string) bool {
-	for _, char := range s {
-		if unicode.IsPunct(char) || unicode.IsSymbol(char) {
-			return true
-		}
-	}
-	return false
 }
