@@ -63,3 +63,53 @@ func (s *Server) handleVerificationForm(w http.ResponseWriter, r *http.Request) 
 
 	http.Redirect(w, r, "/login", http.StatusFound)
 }
+
+func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
+	tmpl, _ := template.ParseFiles("views/enterEmail.html")
+	err := tmpl.Execute(w, struct {
+		ErrorMessage string
+	}{ErrorMessage: ""})
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) handleEnterEmailForm(w http.ResponseWriter, r *http.Request) {
+	email := r.FormValue("email")
+
+	user, err := s.app.UserService.GetUserByEmail(email)
+	if err != nil {
+		data := struct {
+			Email        string
+			ErrorMessage string
+		}{Email: email, ErrorMessage: "Invalid email"}
+
+		tmpl, _ := template.ParseFiles("views/enterEmail.html")
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	code, err := s.app.VerificationService.SendCode(user.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("Use this link to reset your password: http://localhost:8080/password/reset/" + email + "/" + code)
+
+	http.Redirect(w, r, "/message/password/reset", http.StatusFound)
+}
+
+func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
+	tmpl, _ := template.ParseFiles("views/message.html")
+	err := tmpl.Execute(w, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}

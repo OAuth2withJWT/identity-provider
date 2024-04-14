@@ -35,6 +35,12 @@ body {
     margin: 0;
 }
 
+a {
+    font-size: small;
+    margin: 0; 
+    text-align: center;
+}
+
 input {
     display: block;
     width: 300px;

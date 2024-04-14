@@ -67,7 +67,7 @@ func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 		return nil, &FieldError{Message: errorMessage}
 	}
 
-	hashedPassword, err := HashPassword(req.Password)
+	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -101,6 +101,7 @@ type UserRepository interface {
 	Create(CreateUserRequest) (*User, error)
 	GetUserByEmail(email string) (User, error)
 	GetUserByID(user_id int) (User, error)
+	UpdatePassword(hashedPassword string, userId int) error
 }
 
 func (s *UserService) GetUserByEmail(email string) (User, error) {
@@ -121,7 +122,29 @@ func (s *UserService) GetUserByID(user_id int) (User, error) {
 	return user, nil
 }
 
-func HashPassword(password string) (string, error) {
+func (s *UserService) ResetPassword(userId int, newPassword string) error {
+	v := &validation.Validator{}
+	v.Errors = make(map[string]error)
+	v.IsValidPassword("password", newPassword)
+	errorMessage := v.Error()
+
+	if errorMessage != "" {
+		return &FieldError{Message: errorMessage}
+	}
+
+	hashedPassword, err := hashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	err = s.repository.UpdatePassword(hashedPassword, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
 }

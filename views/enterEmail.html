@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Enter email</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/public/form.css">
 </head>
@@ -12,20 +12,17 @@
         <div class="form-wrapper">
             <div class="form-container">
                 <div class="heading">
-                    <h2>Login</h2>
+                    <h4>Enter the email address associated with your account.</h4>
                 </div>
                 {{ if .ErrorMessage }}
                     <div class="error-message">
                         <p>{{ .ErrorMessage }}</p>
                     </div>
                 {{ end }}
-                <form action="/login" method="post">
+                <form action="/enter/email" method="post">
                     <label for="email">Email:</label><br>
-                    <input type="text" id="email" name="email"><br>
-                    <label for="password">Password:</label><br>
-                    <input type="password" id="password" name="password"><br>
-                    <a href="/enter/email">Forgot your password?</a><br><br>
-                    <input type="submit" value="Login">
+                    <input type="text" id="email" name="email"><br><br>
+                    <input type="submit" value="Continue">
                 </form>
             </div>
         </div>

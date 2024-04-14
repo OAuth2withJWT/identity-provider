@@ -46,3 +46,12 @@ func (ur *UserRepository) GetUserByID(user_id int) (app.User, error) {
 	}
 	return user, nil
 }
+
+func (ur *UserRepository) UpdatePassword(hashedPassword string, userId int) error {
+	query := `UPDATE users SET password = $1 WHERE id = $2`
+	_, err := ur.db.Exec(query, hashedPassword, userId)
+	if err != nil {
+		return err
+	}
+	return nil
+}

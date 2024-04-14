@@ -37,4 +37,9 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/logout", s.handleLogoutForm).Methods("POST")
 	s.router.HandleFunc("/verification/{email}", s.handleVerificationPage).Methods("GET")
 	s.router.HandleFunc("/verification/{email}", s.handleVerificationForm).Methods("POST")
+	s.router.HandleFunc("/password/reset/{email}/{code}", s.handlePasswordResetPage).Methods("GET")
+	s.router.HandleFunc("/password/reset/{email}/{code}", s.handlePasswordResetForm).Methods("POST")
+	s.router.HandleFunc("/enter/email", s.handleEnterEmailPage).Methods("GET")
+	s.router.HandleFunc("/enter/email", s.handleEnterEmailForm).Methods("POST")
+	s.router.HandleFunc("/message/password/reset", s.handleMessage).Methods("GET")
 }

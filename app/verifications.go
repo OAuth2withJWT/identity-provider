@@ -52,7 +52,11 @@ func (v *VerificationService) ValidateCode(userId int, code string) error {
 	}
 
 	err = v.repository.UpdateVerified(userId)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (v *VerificationService) IsUserVerified(userId int) error {

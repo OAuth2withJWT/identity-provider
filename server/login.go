@@ -40,8 +40,9 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		data := struct {
+			Email        string
 			ErrorMessage string
-		}{ErrorMessage: errorMessage}
+		}{Email: email, ErrorMessage: errorMessage}
 
 		tmpl, _ := template.ParseFiles("views/login.html")
 		err = tmpl.Execute(w, data)

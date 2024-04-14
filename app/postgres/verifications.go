@@ -15,7 +15,7 @@ func NewVerificationRepository(db *sql.DB) *VerificationRepository {
 }
 
 func (vr *VerificationRepository) CreateVerification(userId int, code string) (string, error) {
-	err := vr.db.QueryRow("INSERT INTO verifications (user_id, code, verified) VALUES ($1, $2, $3) RETURNING code", userId, code, false).Scan(&code)
+	err := vr.db.QueryRow("INSERT INTO verifications (user_id, code, verified) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET code = EXCLUDED.code, verified = EXCLUDED.verified RETURNING code", userId, code, false).Scan(&code)
 	if err != nil {
 		return "", err
 	}
