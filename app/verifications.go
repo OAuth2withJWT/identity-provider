@@ -20,6 +20,7 @@ type VerificationRepository interface {
 	CreateVerification(userId int, code string) (string, error)
 	UpdateVerified(userId int) error
 	GetVerificationCodeByUserID(userId int) (string, error)
+	GetVerifiedByUserID(userId int) (bool, error)
 }
 
 type Verification struct {
@@ -33,12 +34,12 @@ func (v *VerificationService) SendCode(userId int) (string, error) {
 	code := generateVerificationCode()
 	println("Verification code: " + code)
 
-	code, err := v.repository.CreateVerification(userId, code)
+	actualCode, err := v.repository.CreateVerification(userId, code)
 	if err != nil {
 		return "", err
 	}
 
-	return code, nil
+	return actualCode, nil
 }
 
 func (v *VerificationService) ValidateCode(userId int, code string) error {
@@ -52,6 +53,17 @@ func (v *VerificationService) ValidateCode(userId int, code string) error {
 
 	err = v.repository.UpdateVerified(userId)
 	return err
+}
+
+func (v *VerificationService) IsUserVerified(userId int) error {
+	isVerified, err := v.repository.GetVerifiedByUserID(userId)
+	if err != nil {
+		return &FieldError{Message: "Invalid email or password"}
+	}
+	if !isVerified {
+		return &FieldError{Message: "User is not verified"}
+	}
+	return nil
 }
 
 func generateVerificationCode() string {

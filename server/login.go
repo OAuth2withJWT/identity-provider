@@ -30,17 +30,43 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	user, err := s.app.UserService.ValidateUserCredentials(email, password)
+
 	if err != nil {
-		tmpl, err := template.ParseFiles("views/login.html")
-		if err != nil {
+		var errorMessage string
+		if fieldErr, ok := err.(*app.FieldError); ok {
+			errorMessage = fieldErr.Message
+		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		data := struct {
 			ErrorMessage string
-		}{
-			ErrorMessage: "Invalid email or password",
+		}{ErrorMessage: errorMessage}
+
+		tmpl, _ := template.ParseFiles("views/login.html")
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
+		return
+	}
+
+	err = s.app.VerificationService.IsUserVerified(user.UserId)
+
+	if err != nil {
+		var errorMessage string
+		if fieldErr, ok := err.(*app.FieldError); ok {
+			errorMessage = fieldErr.Message
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		data := struct {
+			ErrorMessage string
+		}{ErrorMessage: errorMessage}
+
+		tmpl, _ := template.ParseFiles("views/login.html")
 		err = tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

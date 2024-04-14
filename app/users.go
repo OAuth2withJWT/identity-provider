@@ -83,14 +83,15 @@ func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 }
 
 func (s *UserService) ValidateUserCredentials(email, password string) (User, error) {
+	errorMessage := "Invalid email or password"
 	user, err := s.repository.GetUserByEmail(email)
 	if err != nil {
-		return User{}, err
+		return User{}, &FieldError{Message: errorMessage}
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return User{}, err
+		return User{}, &FieldError{Message: errorMessage}
 	}
 
 	return user, nil
