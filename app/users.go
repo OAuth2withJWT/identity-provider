@@ -40,7 +40,7 @@ func (e *FieldError) Error() string {
 	return e.Message
 }
 
-func (req *CreateUserRequest) Validate() string {
+func (req *CreateUserRequest) validateFields() string {
 	v := &validation.Validator{}
 	v.Errors = make(map[string]error)
 
@@ -56,16 +56,12 @@ func (req *CreateUserRequest) Validate() string {
 }
 
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
-	errorMessage := req.Validate()
+	errorMessage := req.validateFields()
 	if errorMessage != "" {
 		return nil, &FieldError{Message: errorMessage}
 	}
 
-	user, err := s.repository.GetUserByEmail(req.Email)
-	if err != nil {
-		return nil, err
-	}
-
+	user, _ := s.repository.GetUserByEmail(req.Email)
 	if user != (User{}) {
 		errorMessage = "User with that email already exists"
 		return nil, &FieldError{Message: errorMessage}
@@ -77,8 +73,8 @@ func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 	}
 
 	req.Password = hashedPassword
-	newUser, err := s.repository.Create(req)
 
+	newUser, err := s.repository.Create(req)
 	if err != nil {
 		return nil, err
 	}

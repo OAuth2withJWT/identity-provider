@@ -35,4 +35,6 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/login", s.handleLoginPage).Methods("GET")
 	s.router.HandleFunc("/login", s.handleLoginForm).Methods("POST")
 	s.router.HandleFunc("/logout", s.handleLogoutForm).Methods("POST")
+	s.router.HandleFunc("/verification/{email}", s.handleVerificationPage).Methods("GET")
+	s.router.HandleFunc("/verification/{email}", s.handleVerificationForm).Methods("POST")
 }

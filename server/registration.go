@@ -31,8 +31,7 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 		Username:  r.FormValue("username"),
 		Password:  r.FormValue("password"),
 	}
-
-	_, err := s.app.UserService.Create(req)
+	user, err := s.app.UserService.Create(req)
 	if err != nil {
 		var errorMessage string
 		if fieldErr, ok := err.(*app.FieldError); ok {
@@ -53,6 +52,11 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
+	_, err = s.app.VerificationService.SendCode(user.UserId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	http.Redirect(w, r, "/login", http.StatusFound)
+	http.Redirect(w, r, "/verification/"+user.Email, http.StatusFound)
 }
