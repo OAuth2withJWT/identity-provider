@@ -33,7 +33,7 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		var errorMessage string
-		if fieldErr, ok := err.(*app.FieldError); ok {
+		if fieldErr, ok := err.(*app.Error); ok {
 			errorMessage = fieldErr.Message
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -57,7 +57,7 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		var errorMessage string
-		if fieldErr, ok := err.(*app.FieldError); ok {
+		if fieldErr, ok := err.(*app.Error); ok {
 			errorMessage = fieldErr.Message
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

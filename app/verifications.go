@@ -30,7 +30,7 @@ type Verification struct {
 	Verified bool
 }
 
-func (v *VerificationService) SendCode(userId int) (string, error) {
+func (v *VerificationService) CreateVerification(userId int) (string, error) {
 	code := generateVerificationCode()
 	println("Verification code: " + code)
 
@@ -42,13 +42,13 @@ func (v *VerificationService) SendCode(userId int) (string, error) {
 	return actualCode, nil
 }
 
-func (v *VerificationService) ValidateCode(userId int, code string) error {
+func (v *VerificationService) Verify(userId int, code string) error {
 	actualCode, err := v.repository.GetVerificationCodeByUserID(userId)
 	if err != nil {
-		return &FieldError{Message: "User doesn't exist"}
+		return &Error{Message: "User doesn't exist"}
 	}
 	if code != actualCode {
-		return &FieldError{Message: "Invalid code! Try again."}
+		return &Error{Message: "Invalid code! Try again."}
 	}
 
 	err = v.repository.UpdateVerified(userId)
@@ -62,10 +62,10 @@ func (v *VerificationService) ValidateCode(userId int, code string) error {
 func (v *VerificationService) IsUserVerified(userId int) error {
 	isVerified, err := v.repository.GetVerifiedByUserID(userId)
 	if err != nil {
-		return &FieldError{Message: "Invalid email or password"}
+		return &Error{Message: "Invalid email or password"}
 	}
 	if !isVerified {
-		return &FieldError{Message: "User is not verified"}
+		return &Error{Message: "User is not verified"}
 	}
 	return nil
 }

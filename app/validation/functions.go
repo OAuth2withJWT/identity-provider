@@ -7,9 +7,9 @@ import (
 	"unicode"
 )
 
-func (v *Validator) IsEmpty(value string) {
-	if strings.TrimSpace(value) == "" && v.Errors["emptyField"] == nil {
-		v.Errors["emptyField"] = fmt.Errorf("Fields cannot be empty")
+func (v *Validator) IsEmpty(field string, value string) {
+	if strings.TrimSpace(value) == "" {
+		v.Errors[field] = fmt.Errorf("%s cannot be empty", field)
 	}
 }
 

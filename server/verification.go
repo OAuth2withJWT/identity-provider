@@ -37,10 +37,10 @@ func (s *Server) handleVerificationForm(w http.ResponseWriter, r *http.Request) 
 
 	user, _ := s.app.UserService.GetUserByEmail(email)
 
-	err := s.app.VerificationService.ValidateCode(user.UserId, verificationCode)
+	err := s.app.VerificationService.Verify(user.UserId, verificationCode)
 	if err != nil {
 		var errorMessage string
-		if fieldErr, ok := err.(*app.FieldError); ok {
+		if fieldErr, ok := err.(*app.Error); ok {
 			errorMessage = fieldErr.Message
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -65,7 +65,7 @@ func (s *Server) handleVerificationForm(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
-	tmpl, _ := template.ParseFiles("views/enterEmail.html")
+	tmpl, _ := template.ParseFiles("views/enter_email.html")
 	err := tmpl.Execute(w, struct {
 		ErrorMessage string
 	}{ErrorMessage: ""})
@@ -86,7 +86,7 @@ func (s *Server) handleEnterEmailForm(w http.ResponseWriter, r *http.Request) {
 			ErrorMessage string
 		}{Email: email, ErrorMessage: "Invalid email"}
 
-		tmpl, _ := template.ParseFiles("views/enterEmail.html")
+		tmpl, _ := template.ParseFiles("views/enter_email.html")
 		err = tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -95,19 +95,21 @@ func (s *Server) handleEnterEmailForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	code, err := s.app.VerificationService.SendCode(user.UserId)
+	code, err := s.app.VerificationService.CreateVerification(user.UserId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("Use this link to reset your password: http://localhost:8080/password/reset/" + email + "/" + code)
+	fmt.Println("Use this link to reset your password: http://localhost:8080/password-reset?email=" + email + "&code=" + code)
 
-	http.Redirect(w, r, "/message/password/reset", http.StatusFound)
+	http.Redirect(w, r, "/success-message", http.StatusFound)
 }
 
 func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	tmpl, _ := template.ParseFiles("views/message.html")
-	err := tmpl.Execute(w, nil)
+	err := tmpl.Execute(w, struct {
+		Message string
+	}{Message: "Check your email and follow instructions."})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

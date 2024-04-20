@@ -34,7 +34,7 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 	user, err := s.app.UserService.Create(req)
 	if err != nil {
 		var errorMessage string
-		if fieldErr, ok := err.(*app.FieldError); ok {
+		if fieldErr, ok := err.(*app.Error); ok {
 			errorMessage = fieldErr.Message
 		} else {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -52,7 +52,7 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
-	_, err = s.app.VerificationService.SendCode(user.UserId)
+	_, err = s.app.VerificationService.CreateVerification(user.UserId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

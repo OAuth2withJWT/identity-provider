@@ -32,11 +32,12 @@ type CreateUserRequest struct {
 	Password  string
 }
 
-type FieldError struct {
+type Error struct {
 	Message string
+	Kind    string
 }
 
-func (e *FieldError) Error() string {
+func (e *Error) Error() string {
 	return e.Message
 }
 
@@ -44,11 +45,11 @@ func (req *CreateUserRequest) validateFields() string {
 	v := &validation.Validator{}
 	v.Errors = make(map[string]error)
 
-	v.IsEmpty(req.FirstName)
-	v.IsEmpty(req.LastName)
-	v.IsEmpty(req.Username)
-	v.IsEmpty(req.Email)
-	v.IsEmpty(req.Password)
+	v.IsEmpty("First name", req.FirstName)
+	v.IsEmpty("Last name", req.LastName)
+	v.IsEmpty("Username", req.Username)
+	v.IsEmpty("Email", req.Email)
+	v.IsEmpty("Password", req.Password)
 	v.IsEmail("email", req.Email)
 	v.IsValidPassword("password", req.Password)
 
@@ -58,13 +59,13 @@ func (req *CreateUserRequest) validateFields() string {
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
 	errorMessage := req.validateFields()
 	if errorMessage != "" {
-		return nil, &FieldError{Message: errorMessage}
+		return nil, &Error{Message: errorMessage}
 	}
 
 	user, _ := s.repository.GetUserByEmail(req.Email)
 	if user != (User{}) {
 		errorMessage = "User with that email already exists"
-		return nil, &FieldError{Message: errorMessage}
+		return nil, &Error{Message: errorMessage}
 	}
 
 	hashedPassword, err := hashPassword(req.Password)
@@ -86,12 +87,12 @@ func (s *UserService) ValidateUserCredentials(email, password string) (User, err
 	errorMessage := "Invalid email or password"
 	user, err := s.repository.GetUserByEmail(email)
 	if err != nil {
-		return User{}, &FieldError{Message: errorMessage}
+		return User{}, &Error{Message: errorMessage}
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return User{}, &FieldError{Message: errorMessage}
+		return User{}, &Error{Message: errorMessage}
 	}
 
 	return user, nil
@@ -129,7 +130,7 @@ func (s *UserService) ResetPassword(userId int, newPassword string) error {
 	errorMessage := v.Error()
 
 	if errorMessage != "" {
-		return &FieldError{Message: errorMessage}
+		return &Error{Message: errorMessage}
 	}
 
 	hashedPassword, err := hashPassword(newPassword)
