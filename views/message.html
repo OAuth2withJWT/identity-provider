@@ -3,13 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter email</title>
+    <title>Account status</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/public/index.css">
 </head>
 <body>
     <div class="container">
-        <h1>{{ .Message }}</h1>
+        {{ if .VerificationError }}
+            <h1>Oops! It looks like the verification link is invalid.</h1>
+            <p>Please double-check the link and try again.</p>
+        {{ else if .Verified }}
+            <h1>Your account has been verified.</h1>
+            <p>You can now log in with your account.</p>
+            <form action="/login" method="get">
+                <button type="submit">Continue</button>
+            </form>
+        {{ else if .SuccessReset }}
+            <h1>Your password has been successfully changed.</h1>
+            <p>You can now log in with your account.</p>
+            <form action="/login" method="get">
+                <button type="submit">Continue</button>
+            </form>        
+        {{else}}
+            <h1>Check your email and follow instructions.</h1>
+        {{ end }}
     </div>
 </body>
 </html>

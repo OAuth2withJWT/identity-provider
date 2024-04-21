@@ -2,6 +2,7 @@ package server
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
@@ -52,11 +53,13 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
-	_, err = s.app.VerificationService.CreateVerification(user.UserId)
+	code, err := s.app.VerificationService.CreateVerification(user.UserId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/verification/"+user.Email, http.StatusFound)
+	log.Print("Use this link to verify your account: http://localhost:8080/verification?email=" + user.Email + "&code=" + code)
+
+	http.Redirect(w, r, "/account-status-message", http.StatusFound)
 }

@@ -19,9 +19,9 @@
                         <p>{{ .ErrorMessage }}</p>
                     </div>
                 {{ end }}
-                <form action="/enter-email" method="post">
-                    <label for="email">Email:</label><br>
-                    <input type="text" id="email" name="email"><br><br>
+                <form action="/request-email-verification" method="post">
+                    <label for="email">Email:</label>
+                    <input type="text" id="email" name="email" autofocus>
                     <input type="submit" value="Continue">
                 </form>
             </div>

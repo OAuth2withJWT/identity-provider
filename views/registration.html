@@ -20,17 +20,18 @@
                     </div>
                 {{ end }}
                 <form method="POST">
-                    <label>First name:</label><br />
-                    <input type="text" name="firstName" id="firstName"><br />
-                    <label>Last name:</label><br />
-                    <input type="text" name="lastName" id="lastName"><br />
-                    <label>Email:</label><br />
-                    <input type="text" name="email" id="email"><br />
-                    <label>Username:</label><br />
-                    <input type="text" name="username" id="username"><br />
-                    <label>Password:</label><br />
-                    <input type="password" name="password" id="password"><br />
+                    <label>First name:</label>
+                    <input type="text" name="firstName" id="firstName" autofocus>
+                    <label>Last name:</label>
+                    <input type="text" name="lastName" id="lastName">
+                    <label>Email:</label>
+                    <input type="text" name="email" id="email">
+                    <label>Username:</label>
+                    <input type="text" name="username" id="username">
+                    <label>Password:</label>
+                    <input type="password" name="password" id="password">
                     <input type="Submit">
+                    <p class="message">Already have an account? <a href="/login">Login</a></p>
                 </form>
             </div>
         </div>

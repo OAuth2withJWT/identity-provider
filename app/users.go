@@ -32,6 +32,11 @@ type CreateUserRequest struct {
 	Password  string
 }
 
+type PasswordResetRequest struct {
+	UserId   int
+	Password string
+}
+
 type Error struct {
 	Message string
 	Kind    string
@@ -123,22 +128,28 @@ func (s *UserService) GetUserByID(user_id int) (User, error) {
 	return user, nil
 }
 
-func (s *UserService) ResetPassword(userId int, newPassword string) error {
+func (req *PasswordResetRequest) validateNewPassword() string {
 	v := &validation.Validator{}
 	v.Errors = make(map[string]error)
-	v.IsValidPassword("password", newPassword)
-	errorMessage := v.Error()
+	v.IsEmpty("password", req.Password)
+	v.IsValidPassword("password", req.Password)
+
+	return v.Error()
+}
+
+func (s *UserService) ResetPassword(req PasswordResetRequest) error {
+	errorMessage := req.validateNewPassword()
 
 	if errorMessage != "" {
 		return &Error{Message: errorMessage}
 	}
 
-	hashedPassword, err := hashPassword(newPassword)
+	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		return err
 	}
 
-	err = s.repository.UpdatePassword(hashedPassword, userId)
+	err = s.repository.UpdatePassword(hashedPassword, req.UserId)
 	if err != nil {
 		return err
 	}

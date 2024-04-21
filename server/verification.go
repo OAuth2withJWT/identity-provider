@@ -1,67 +1,22 @@
 package server
 
 import (
-	"fmt"
 	"html/template"
+	"log"
 	"net/http"
-
-	"github.com/OAuth2withJWT/identity-provider/app"
-	"github.com/gorilla/mux"
 )
 
 func (s *Server) handleVerificationPage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	email := vars["email"]
-
-	tmpl, _ := template.ParseFiles("views/verification.html")
-	err := tmpl.Execute(w, struct {
-		Email        string
-		ErrorMessage string
-	}{Email: email, ErrorMessage: ""})
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-}
-
-func (s *Server) handleVerificationForm(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	email := vars["email"]
-
-	var verificationCode string
-	for i := 1; i <= 6; i++ {
-		digit := r.FormValue(fmt.Sprintf("digit%d", i))
-		verificationCode += digit
-	}
+	email := r.URL.Query().Get("email")
+	code := r.URL.Query().Get("code")
 
 	user, _ := s.app.UserService.GetUserByEmail(email)
-
-	err := s.app.VerificationService.Verify(user.UserId, verificationCode)
+	err := s.app.VerificationService.Verify(user.UserId, code)
 	if err != nil {
-		var errorMessage string
-		if fieldErr, ok := err.(*app.Error); ok {
-			errorMessage = fieldErr.Message
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		data := struct {
-			Email        string
-			ErrorMessage string
-		}{Email: email, ErrorMessage: errorMessage}
-
-		tmpl, _ := template.ParseFiles("views/verification.html")
-		err = tmpl.Execute(w, data)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		return
+		http.Redirect(w, r, "/account-status-message?verification-error=true", http.StatusFound)
 	}
-	fmt.Println("Verification code for ", email, ": ", verificationCode)
 
-	http.Redirect(w, r, "/login", http.StatusFound)
+	http.Redirect(w, r, "/account-status-message?verified=true", http.StatusFound)
 }
 
 func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
@@ -100,16 +55,37 @@ func (s *Server) handleEnterEmailForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	fmt.Println("Use this link to reset your password: http://localhost:8080/password-reset?email=" + email + "&code=" + code)
+	log.Print("Use this link to reset your password: http://localhost:8080/password-reset?email=" + email + "&code=" + code)
 
-	http.Redirect(w, r, "/success-message", http.StatusFound)
+	http.Redirect(w, r, "/account-status-message", http.StatusFound)
 }
 
 func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
+	verificationError := false
+	errorStr := r.URL.Query().Get("verification-error")
+	if errorStr == "true" {
+		verificationError = true
+	}
+
+	verified := false
+	verifiedStr := r.URL.Query().Get("verified")
+	if verifiedStr == "true" {
+		verified = true
+	}
+
+	successReset := false
+	successResetStr := r.URL.Query().Get("success-reset")
+	if successResetStr == "true" {
+		successReset = true
+	}
+
 	tmpl, _ := template.ParseFiles("views/message.html")
 	err := tmpl.Execute(w, struct {
-		Message string
-	}{Message: "Check your email and follow instructions."})
+		VerificationError bool
+		SuccessReset      bool
+		Verified          bool
+	}{VerificationError: verificationError, SuccessReset: successReset, Verified: verified})
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

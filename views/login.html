@@ -20,12 +20,13 @@
                     </div>
                 {{ end }}
                 <form action="/login" method="post">
-                    <label for="email">Email:</label><br>
-                    <input type="text" id="email" name="email"><br>
-                    <label for="password">Password:</label><br>
-                    <input type="password" id="password" name="password"><br>
-                    <a href="/enter-email">Forgot your password?</a><br><br>
+                    <label for="email">Email:</label>
+                    <input type="text" id="email" name="email" autofocus>
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password">
+                    <a href="/request-email-verification">Forgot your password?</a>
                     <input type="submit" value="Login">
+                    <p class="message">Don't have an account? <a href="/registration">Register</a></p>
                 </form>
             </div>
         </div>

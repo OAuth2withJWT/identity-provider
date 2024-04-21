@@ -1,9 +1,7 @@
 package app
 
 import (
-	"math/rand"
-	"strconv"
-	"time"
+	"github.com/google/uuid"
 )
 
 type VerificationService struct {
@@ -32,7 +30,6 @@ type Verification struct {
 
 func (v *VerificationService) CreateVerification(userId int) (string, error) {
 	code := generateVerificationCode()
-	println("Verification code: " + code)
 
 	actualCode, err := v.repository.CreateVerification(userId, code)
 	if err != nil {
@@ -71,6 +68,5 @@ func (v *VerificationService) IsUserVerified(userId int) error {
 }
 
 func generateVerificationCode() string {
-	rand.Seed(time.Now().UnixNano())
-	return strconv.Itoa(rand.Intn(900000) + 100000)
+	return uuid.NewString()
 }

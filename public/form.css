@@ -27,17 +27,24 @@ body {
 .heading {
     text-align: center;
     margin: 0;
+    margin-bottom: 10px;
+}
+
+a, .message {
+    font-size: small;
+    margin: 30px 0; 
+    text-align: center;
+}
+
+a {
+    text-decoration: none;
+    color: #007bff;
 }
 
 .error-message {
     color: red;
     font-size: small;
-    margin: 0;
-}
-
-a {
-    font-size: small;
-    margin: 0; 
+    margin: 30px, 0;
     text-align: center;
 }
 
@@ -46,7 +53,14 @@ input {
     width: 300px;
     border: none;
     border-bottom: 1px solid #ccc; 
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+
+input:focus {
+    border: none;
+    outline: none;
+    border-bottom: 1px solid #0056b3; 
 }
 
 input[type="submit"] {
@@ -57,7 +71,7 @@ input[type="submit"] {
     border-radius: 5px;
     cursor: pointer;
     width: 300px;
-    margin-bottom: 10px;
+    margin-top: 30px;
 }
 
 input[type="submit"]:hover {
