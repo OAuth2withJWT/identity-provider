@@ -6,17 +6,17 @@ import (
 	"net/http"
 )
 
-func (s *Server) handleVerificationPage(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleVerification(w http.ResponseWriter, r *http.Request) {
 	email := r.URL.Query().Get("email")
 	code := r.URL.Query().Get("code")
 
 	user, _ := s.app.UserService.GetUserByEmail(email)
 	err := s.app.VerificationService.Verify(user.UserId, code)
 	if err != nil {
-		http.Redirect(w, r, "/account-status-message?verification-error=true", http.StatusFound)
+		http.Redirect(w, r, "/account-message?status=verification-error", http.StatusFound)
 	}
 
-	http.Redirect(w, r, "/account-status-message?verified=true", http.StatusFound)
+	http.Redirect(w, r, "/account-message?status=verified", http.StatusFound)
 }
 
 func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
@@ -57,28 +57,22 @@ func (s *Server) handleEnterEmailForm(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Print("Use this link to reset your password: http://localhost:8080/password-reset?email=" + email + "&code=" + code)
 
-	http.Redirect(w, r, "/account-status-message", http.StatusFound)
+	http.Redirect(w, r, "/account-message?status=email-sent", http.StatusFound)
 }
 
 func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	verificationError := false
-	errorStr := r.URL.Query().Get("verification-error")
-	if errorStr == "true" {
-		verificationError = true
-	}
-
 	verified := false
-	verifiedStr := r.URL.Query().Get("verified")
-	if verifiedStr == "true" {
-		verified = true
-	}
-
 	successReset := false
-	successResetStr := r.URL.Query().Get("success-reset")
-	if successResetStr == "true" {
+
+	status := r.URL.Query().Get("status")
+	if status == "verification-error" {
+		verificationError = true
+	} else if status == "verified" {
+		verified = true
+	} else if status == "password-reset" {
 		successReset = true
 	}
-
 	tmpl, _ := template.ParseFiles("views/message.html")
 	err := tmpl.Execute(w, struct {
 		VerificationError bool

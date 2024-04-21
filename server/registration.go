@@ -61,5 +61,5 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 
 	log.Print("Use this link to verify your account: http://localhost:8080/verification?email=" + user.Email + "&code=" + code)
 
-	http.Redirect(w, r, "/account-status-message", http.StatusFound)
+	http.Redirect(w, r, "/account-message?status=email-sent", http.StatusFound)
 }

@@ -14,7 +14,7 @@ func (s *Server) handlePasswordResetPage(w http.ResponseWriter, r *http.Request)
 	user, _ := s.app.UserService.GetUserByEmail(email)
 	err := s.app.VerificationService.Verify(user.UserId, code)
 	if err != nil {
-		http.Redirect(w, r, "/account-status-message?verification-error=true", http.StatusFound)
+		http.Redirect(w, r, "/account-message?status=verification-error", http.StatusFound)
 	}
 
 	tmpl, _ := template.ParseFiles("views/password_reset.html")
@@ -76,5 +76,5 @@ func (s *Server) handlePasswordResetForm(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	http.Redirect(w, r, "/account-status-message?success-reset=true", http.StatusFound)
+	http.Redirect(w, r, "/account-message?status=password-reset", http.StatusFound)
 }
