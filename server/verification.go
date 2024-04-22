@@ -22,8 +22,9 @@ func (s *Server) handleVerification(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
 	tmpl, _ := template.ParseFiles("views/enter_email.html")
 	err := tmpl.Execute(w, struct {
+		Email        string
 		ErrorMessage string
-	}{ErrorMessage: ""})
+	}{Email: "", ErrorMessage: ""})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

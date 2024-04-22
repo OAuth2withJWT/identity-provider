@@ -32,17 +32,11 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 	user, err := s.app.UserService.ValidateUserCredentials(email, password)
 
 	if err != nil {
-		var errorMessage string
-		if fieldErr, ok := err.(*app.Error); ok {
-			errorMessage = fieldErr.Message
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 		data := struct {
 			Email        string
+			Password     string
 			ErrorMessage string
-		}{Email: email, ErrorMessage: errorMessage}
+		}{Email: email, Password: password, ErrorMessage: err.Error()}
 
 		tmpl, _ := template.ParseFiles("views/login.html")
 		err = tmpl.Execute(w, data)
@@ -56,16 +50,11 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 	err = s.app.VerificationService.IsUserVerified(user.UserId)
 
 	if err != nil {
-		var errorMessage string
-		if fieldErr, ok := err.(*app.Error); ok {
-			errorMessage = fieldErr.Message
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
 		data := struct {
+			Email        string
+			Password     string
 			ErrorMessage string
-		}{ErrorMessage: errorMessage}
+		}{Email: email, Password: password, ErrorMessage: err.Error()}
 
 		tmpl, _ := template.ParseFiles("views/login.html")
 		err = tmpl.Execute(w, data)

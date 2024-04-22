@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -42,10 +44,10 @@ func (v *VerificationService) CreateVerification(userId int) (string, error) {
 func (v *VerificationService) Verify(userId int, code string) error {
 	actualCode, err := v.repository.GetVerificationCodeByUserID(userId)
 	if err != nil {
-		return &Error{Message: "User doesn't exist"}
+		return err
 	}
 	if code != actualCode {
-		return &Error{Message: "Invalid code! Try again."}
+		return fmt.Errorf("Invalid code! Try again.")
 	}
 
 	err = v.repository.UpdateVerified(userId)
@@ -59,10 +61,10 @@ func (v *VerificationService) Verify(userId int, code string) error {
 func (v *VerificationService) IsUserVerified(userId int) error {
 	isVerified, err := v.repository.GetVerifiedByUserID(userId)
 	if err != nil {
-		return &Error{Message: "Invalid email or password"}
+		return fmt.Errorf("Invalid email or password")
 	}
 	if !isVerified {
-		return &Error{Message: "User is not verified"}
+		return fmt.Errorf("User is not verified")
 	}
 	return nil
 }

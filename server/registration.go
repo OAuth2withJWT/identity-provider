@@ -25,28 +25,20 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) {
-	req := app.CreateUserRequest{
+	req := app.RegistrationRequest{
 		FirstName: r.FormValue("firstName"),
 		LastName:  r.FormValue("lastName"),
 		Email:     r.FormValue("email"),
 		Username:  r.FormValue("username"),
 		Password:  r.FormValue("password"),
 	}
-	user, err := s.app.UserService.Create(req)
-	if err != nil {
-		var errorMessage string
-		if fieldErr, ok := err.(*app.Error); ok {
-			errorMessage = fieldErr.Message
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		data := struct {
-			ErrorMessage string
-		}{ErrorMessage: errorMessage}
+
+	user := s.app.UserService.Create(&req)
+	if user == nil {
+		data := req
 
 		tmpl, _ := template.ParseFiles("views/registration.html")
-		err = tmpl.Execute(w, data)
+		err := tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

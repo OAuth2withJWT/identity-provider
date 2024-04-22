@@ -16,7 +16,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 	}
 }
 
-func (ur *UserRepository) Create(req app.CreateUserRequest) (*app.User, error) {
+func (ur *UserRepository) Create(req *app.RegistrationRequest) (*app.User, error) {
 	row := ur.db.QueryRow("INSERT INTO users (first_name, last_name, email, username, password) VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email, username, password",
 		req.FirstName, req.LastName, req.Email, req.Username, req.Password)
 

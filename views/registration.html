@@ -6,6 +6,21 @@
     <title>Registration</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/public/form.css">
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.querySelector("form");
+
+            form.addEventListener("input", function(event) {
+                const target = event.target;
+                const errorElement = target.nextElementSibling;
+
+                if (errorElement && errorElement.classList.contains("error-message")) {
+                    errorElement.textContent = "";
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -14,22 +29,42 @@
                 <div class="heading">
                     <h2>Register</h2>
                 </div>
-                {{ if .ErrorMessage }}
-                    <div class="error-message">
-                        <p>{{ .ErrorMessage }}</p>
-                    </div>
-                {{ end }}
                 <form method="POST">
                     <label>First name:</label>
-                    <input type="text" name="firstName" id="firstName" autofocus>
+                    <input type="text" name="firstName" id="firstName" value="{{ .FirstName }}" autofocus>
+                    {{ if .ErrorFirstName }}
+                        <div class="error-message">
+                            <p>{{ .ErrorFirstName }}</p>
+                        </div>
+                    {{ end }}
                     <label>Last name:</label>
-                    <input type="text" name="lastName" id="lastName">
+                    <input type="text" name="lastName" id="lastName" value="{{ .LastName }}" >
+                    {{ if .ErrorLastName }}
+                        <div class="error-message">
+                            <p>{{ .ErrorLastName }}</p>
+                        </div>
+                    {{ end }}
                     <label>Email:</label>
-                    <input type="text" name="email" id="email">
+                    <input type="text" name="email" id="email" value="{{ .Email }}" >
+                    {{ if .ErrorEmail }}
+                        <div class="error-message">
+                            <p>{{ .ErrorEmail }}</p>
+                        </div>
+                    {{ end }}
                     <label>Username:</label>
-                    <input type="text" name="username" id="username">
+                    <input type="text" name="username" id="username" value="{{ .Username }}" >
+                    {{ if .ErrorUsername }}
+                        <div class="error-message">
+                            <p>{{ .ErrorUsername }}</p>
+                        </div>
+                    {{ end }}
                     <label>Password:</label>
-                    <input type="password" name="password" id="password">
+                    <input type="password" name="password" id="password" value="{{ .Password }}" >
+                    {{ if .ErrorPassword }}
+                        <div class="error-message">
+                            <p>{{ .ErrorPassword }}</p>
+                        </div>
+                    {{ end }}
                     <input type="Submit">
                     <p class="message">Already have an account? <a href="/login">Login</a></p>
                 </form>

@@ -21,7 +21,7 @@
                 {{ end }}
                 <form action="/request-password-reset" method="post">
                     <label for="email">Email:</label>
-                    <input type="text" id="email" name="email" autofocus>
+                    <input type="text" id="email" name="email" value="{{ .Email }}" autofocus>
                     <input type="submit" value="Continue">
                 </form>
             </div>
