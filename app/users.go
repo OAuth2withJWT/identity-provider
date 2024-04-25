@@ -26,17 +26,12 @@ type User struct {
 	Password  string
 }
 
-type RegistrationRequest struct {
-	ErrorFirstName string
-	ErrorLastName  string
-	ErrorEmail     string
-	ErrorUsername  string
-	ErrorPassword  string
-	FirstName      string
-	LastName       string
-	Email          string
-	Username       string
-	Password       string
+type CreateUserRequest struct {
+	FirstName string
+	LastName  string
+	Email     string
+	Username  string
+	Password  string
 }
 
 type PasswordResetRequest struct {
@@ -45,9 +40,8 @@ type PasswordResetRequest struct {
 	ErrorPassword string
 }
 
-func (s *UserService) validateRegistrationFields(req *RegistrationRequest) bool {
-	v := &validation.Validator{}
-	v.Errors = make(map[string][]error)
+func (req *CreateUserRequest) validateRegistrationFields(s *UserService) error {
+	v := validation.New()
 	v.IsEmpty("First name", req.FirstName)
 	v.IsEmpty("Last name", req.LastName)
 	v.IsEmpty("Username", req.Username)
@@ -55,29 +49,31 @@ func (s *UserService) validateRegistrationFields(req *RegistrationRequest) bool 
 	v.IsEmpty("Password", req.Password)
 	v.IsEmail("Email", req.Email)
 	v.IsValidPassword("Password", req.Password)
-	s.isEmailUsed(v, req.Email)
+	if s.hasUserWithEmail(req.Email) {
+		v.AddError("Email", fmt.Errorf("User with that email already exists"))
+	}
 
-	return req.setRegistrationFieldErrors(v.Errors)
+	return v.Validate()
 }
 
-func (s *UserService) Create(req *RegistrationRequest) *User {
-	if !s.validateRegistrationFields(req) {
-		return nil
+func (s *UserService) Create(req CreateUserRequest) (*User, error) {
+	if err := req.validateRegistrationFields(s); err != nil {
+		return nil, err
 	}
 
 	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	req.Password = hashedPassword
 
 	newUser, err := s.repository.Create(req)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return newUser
+	return newUser, nil
 }
 
 func (s *UserService) ValidateUserCredentials(email, password string) (User, error) {
@@ -96,7 +92,7 @@ func (s *UserService) ValidateUserCredentials(email, password string) (User, err
 }
 
 type UserRepository interface {
-	Create(req *RegistrationRequest) (*User, error)
+	Create(req CreateUserRequest) (*User, error)
 	GetUserByEmail(email string) (User, error)
 	GetUserByID(user_id int) (User, error)
 	UpdatePassword(hashedPassword string, userId int) error
@@ -111,14 +107,9 @@ func (s *UserService) GetUserByEmail(email string) (User, error) {
 	return user, nil
 }
 
-func (s *UserService) isEmailUsed(v *validation.Validator, email string) bool {
+func (s *UserService) hasUserWithEmail(email string) bool {
 	user, _ := s.repository.GetUserByEmail(email)
-	if user != (User{}) {
-		v.Errors["Email"] = append(v.Errors["Email"], fmt.Errorf("User with that email already exists"))
-		return false
-	}
-
-	return true
+	return user != (User{})
 }
 
 func (s *UserService) GetUserByID(user_id int) (User, error) {
@@ -130,18 +121,18 @@ func (s *UserService) GetUserByID(user_id int) (User, error) {
 	return user, nil
 }
 
-func (req *PasswordResetRequest) validateNewPassword() bool {
-	v := &validation.Validator{}
-	v.Errors = make(map[string][]error)
+func (req *PasswordResetRequest) validateNewPassword() error {
+	v := validation.New()
 	v.IsEmpty("Password", req.Password)
 	v.IsValidPassword("Password", req.Password)
 
-	return req.setPasswordResetErrors(v.Errors)
+	return v.Validate()
 }
 
 func (s *UserService) ResetPassword(req *PasswordResetRequest) error {
-	if !req.validateNewPassword() {
-		return fmt.Errorf("")
+	err := req.validateNewPassword()
+	if err != nil {
+		return err
 	}
 
 	hashedPassword, err := hashPassword(req.Password)
@@ -159,32 +150,6 @@ func (s *UserService) ResetPassword(req *PasswordResetRequest) error {
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
-}
-
-func (req *RegistrationRequest) setRegistrationFieldErrors(errors map[string][]error) bool {
-	if len(errors) == 0 {
-		return true
-	}
-
-	for field, err := range errors {
-		if field == "First name" {
-			req.ErrorFirstName = err[0].Error()
-		}
-		if field == "Last name" {
-			req.ErrorLastName = err[0].Error()
-		}
-		if field == "Username" {
-			req.ErrorUsername = err[0].Error()
-		}
-		if field == "Email" {
-			req.ErrorEmail = err[0].Error()
-		}
-		if field == "Password" {
-			req.ErrorPassword = err[0].Error()
-		}
-	}
-
-	return false
 }
 
 func (req *PasswordResetRequest) setPasswordResetErrors(errors map[string][]error) bool {

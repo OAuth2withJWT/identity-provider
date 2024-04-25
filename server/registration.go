@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
+	"github.com/OAuth2withJWT/identity-provider/app/validation"
 )
 
 func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) {
@@ -16,8 +17,17 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 
+	var page Page
+	page.FormFields = map[string]string{
+		"First name": "",
+		"Last name":  "",
+		"Email":      "",
+		"Username":   "",
+		"Password":   "",
+	}
+
 	tmpl, _ := template.ParseFiles("views/registration.html")
-	err = tmpl.Execute(w, nil)
+	err = tmpl.Execute(w, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -25,7 +35,7 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) {
-	req := app.RegistrationRequest{
+	req := app.CreateUserRequest{
 		FirstName: r.FormValue("firstName"),
 		LastName:  r.FormValue("lastName"),
 		Email:     r.FormValue("email"),
@@ -33,17 +43,38 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 		Password:  r.FormValue("password"),
 	}
 
-	user := s.app.UserService.Create(&req)
-	if user == nil {
-		data := req
+	user, err := s.app.UserService.Create(req)
 
-		tmpl, _ := template.ParseFiles("views/registration.html")
-		err := tmpl.Execute(w, data)
-		if err != nil {
+	var page Page
+	page.FormFields = map[string]string{
+		"First name": req.FirstName,
+		"Last name":  req.LastName,
+		"Email":      req.Email,
+		"Username":   req.Username,
+		"Password":   req.Password,
+	}
+
+	if err != nil {
+		switch v := err.(type) {
+		case *validation.Error:
+			page.Success = false
+			page.FormErrors = map[string]string{}
+
+			for field, errs := range v.Errors {
+				page.FormErrors[field] = errs[0].Error()
+			}
+
+			tmpl, _ := template.ParseFiles("views/registration.html")
+			err := tmpl.Execute(w, page)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			return
+		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		return
 	}
 	code, err := s.app.VerificationService.CreateVerification(user.UserId)
 	if err != nil {

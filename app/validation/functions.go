@@ -9,14 +9,14 @@ import (
 
 func (v *Validator) IsEmpty(field string, value string) {
 	if strings.TrimSpace(value) == "" {
-		v.Errors[field] = append(v.Errors[field], fmt.Errorf("%s cannot be empty", field))
+		v.AddError(field, fmt.Errorf("%s cannot be empty", field))
 	}
 }
 
 func (v *Validator) IsEmail(field string, value string) {
 	_, err := mail.ParseAddress(value)
 	if err != nil {
-		v.Errors[field] = append(v.Errors[field], fmt.Errorf("%s is not valid", field))
+		v.errors[field] = append(v.errors[field], fmt.Errorf("%s is not valid", field))
 	}
 }
 
@@ -38,8 +38,12 @@ func (v *Validator) IsValidPassword(field string, password string) {
 	}
 
 	if len(errors) > 0 {
-		v.Errors[field] = append(v.Errors[field], fmt.Errorf("Password must contain at least: "+strings.Join(errors, ", ")))
+		v.AddError(field, fmt.Errorf("Password must contain at least: "+strings.Join(errors, ", ")))
 	}
+}
+
+func (v *Validator) AddError(field string, err error) {
+	v.errors[field] = append(v.errors[field], err)
 }
 
 func containsType(s string, check func(rune) bool) bool {
