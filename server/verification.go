@@ -20,7 +20,7 @@ func (s *Server) handleVerification(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
-	tmpl, _ := template.ParseFiles("views/enter_email.html")
+	tmpl, _ := template.ParseFiles("public/html/enter_email.html")
 	err := tmpl.Execute(w, struct {
 		Email        string
 		ErrorMessage string
@@ -42,7 +42,7 @@ func (s *Server) handleEnterEmailForm(w http.ResponseWriter, r *http.Request) {
 			ErrorMessage string
 		}{Email: email, ErrorMessage: "Invalid email"}
 
-		tmpl, _ := template.ParseFiles("views/enter_email.html")
+		tmpl, _ := template.ParseFiles("public/html/enter_email.html")
 		err = tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -74,7 +74,7 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	} else if status == "password-reset" {
 		successReset = true
 	}
-	tmpl, _ := template.ParseFiles("views/message.html")
+	tmpl, _ := template.ParseFiles("public/html/message.html")
 	err := tmpl.Execute(w, struct {
 		VerificationError bool
 		SuccessReset      bool
