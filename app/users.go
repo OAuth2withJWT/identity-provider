@@ -53,11 +53,16 @@ func (req *CreateUserRequest) validateRegistrationFields(s *UserService) error {
 		v.AddError("Email", fmt.Errorf("User with that email already exists"))
 	}
 
-	return v.Validate()
+	err := v.Validate()
+	if len(err.Errors) == 0 {
+		return nil
+	}
+	return err
 }
 
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
-	if err := req.validateRegistrationFields(s); err != nil {
+	err := req.validateRegistrationFields(s)
+	if err != nil {
 		return nil, err
 	}
 

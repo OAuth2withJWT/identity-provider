@@ -43,6 +43,9 @@ func (v *Validator) IsValidPassword(field string, password string) {
 }
 
 func (v *Validator) AddError(field string, err error) {
+	if v.errors == nil {
+		v.errors = make(map[string][]error)
+	}
 	v.errors[field] = append(v.errors[field], err)
 }
 

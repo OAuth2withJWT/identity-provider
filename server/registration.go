@@ -17,13 +17,14 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 
-	var page Page
-	page.FormFields = map[string]string{
-		"First name": "",
-		"Last name":  "",
-		"Email":      "",
-		"Username":   "",
-		"Password":   "",
+	page := Page{
+		FormFields: map[string]string{
+			"First name": "",
+			"Last name":  "",
+			"Email":      "",
+			"Username":   "",
+			"Password":   "",
+		},
 	}
 
 	tmpl, _ := template.ParseFiles("views/registration.html")
@@ -35,33 +36,33 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) {
-	req := app.CreateUserRequest{
+	page := Page{
+		FormFields: map[string]string{
+			"First name": r.FormValue("firstName"),
+			"Last name":  r.FormValue("lastName"),
+			"Email":      r.FormValue("email"),
+			"Username":   r.FormValue("username"),
+			"Password":   r.FormValue("password"),
+		},
+	}
+
+	user, err := s.app.UserService.Create(app.CreateUserRequest{
 		FirstName: r.FormValue("firstName"),
 		LastName:  r.FormValue("lastName"),
 		Email:     r.FormValue("email"),
 		Username:  r.FormValue("username"),
 		Password:  r.FormValue("password"),
-	}
-
-	user, err := s.app.UserService.Create(req)
-
-	var page Page
-	page.FormFields = map[string]string{
-		"First name": req.FirstName,
-		"Last name":  req.LastName,
-		"Email":      req.Email,
-		"Username":   req.Username,
-		"Password":   req.Password,
-	}
+	})
 
 	if err != nil {
 		switch v := err.(type) {
 		case *validation.Error:
-			page.Success = false
-			page.FormErrors = map[string]string{}
+			page.FormErrors = make(map[string]string)
 
 			for field, errs := range v.Errors {
-				page.FormErrors[field] = errs[0].Error()
+				if len(errs) > 0 {
+					page.FormErrors[field] = errs[0].Error()
+				}
 			}
 
 			tmpl, _ := template.ParseFiles("views/registration.html")
@@ -76,6 +77,7 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 	}
+
 	code, err := s.app.VerificationService.CreateVerification(user.UserId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

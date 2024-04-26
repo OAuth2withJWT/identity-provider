@@ -6,7 +6,7 @@ type Validator struct {
 
 func New() *Validator {
 	return &Validator{
-		errors: map[string][]error{},
+		errors: make(map[string][]error),
 	}
 }
 
@@ -20,7 +20,7 @@ func (e *Error) Error() string {
 
 func (v *Validator) Validate() *Error {
 	if len(v.errors) == 0 {
-		return nil
+		return &Error{}
 	}
 	return &Error{Errors: v.errors}
 }
