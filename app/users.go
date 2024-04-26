@@ -131,7 +131,11 @@ func (req *PasswordResetRequest) validateNewPassword() error {
 	v.IsEmpty("Password", req.Password)
 	v.IsValidPassword("Password", req.Password)
 
-	return v.Validate()
+	err := v.Validate()
+	if len(err.Errors) == 0 {
+		return nil
+	}
+	return err
 }
 
 func (s *UserService) ResetPassword(req *PasswordResetRequest) error {

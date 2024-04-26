@@ -60,9 +60,7 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 			page.FormErrors = make(map[string]string)
 
 			for field, errs := range v.Errors {
-				if len(errs) > 0 {
-					page.FormErrors[field] = errs[0].Error()
-				}
+				page.FormErrors[field] = errs[0].Error()
 			}
 
 			tmpl, _ := template.ParseFiles("views/registration.html")

@@ -64,6 +64,7 @@ func (s *Server) handlePasswordResetForm(w http.ResponseWriter, r *http.Request)
 	}
 	err := s.app.UserService.ResetPassword(&req)
 	if err != nil {
+		println("LOL")
 		data := struct {
 			Email         string
 			Code          string
