@@ -160,17 +160,3 @@ func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
 }
-
-func (req *PasswordResetRequest) setPasswordResetErrors(errors map[string][]error) bool {
-	if len(errors) == 0 {
-		return true
-	}
-
-	for field, err := range errors {
-		if field == "Password" {
-			req.ErrorPassword = err[0].Error()
-		}
-	}
-
-	return false
-}
