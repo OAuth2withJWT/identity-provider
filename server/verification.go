@@ -21,10 +21,11 @@ func (s *Server) handleVerification(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
 	tmpl, _ := template.ParseFiles("views/enter_email.html")
-	err := tmpl.Execute(w, struct {
-		Email        string
-		ErrorMessage string
-	}{Email: "", ErrorMessage: ""})
+	err := tmpl.Execute(w, Page{
+		FormFields: map[string]string{
+			"Email": "",
+		},
+	})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -35,15 +36,20 @@ func (s *Server) handleEnterEmailPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleEnterEmailForm(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 
+	page := Page{
+		FormFields: map[string]string{
+			"Email": email,
+		},
+	}
+
 	user, err := s.app.UserService.GetUserByEmail(email)
 	if err != nil {
-		data := struct {
-			Email        string
-			ErrorMessage string
-		}{Email: email, ErrorMessage: "Invalid email"}
+		page.FormErrors = make(map[string]string)
+
+		page.FormErrors["Email"] = "Invalid email"
 
 		tmpl, _ := template.ParseFiles("views/enter_email.html")
-		err = tmpl.Execute(w, data)
+		err = tmpl.Execute(w, page)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
