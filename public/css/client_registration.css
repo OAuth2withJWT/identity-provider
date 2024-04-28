@@ -212,3 +212,8 @@ input[type="submit"]:hover {
         padding: 20px;
     }
 }
+
+.error-message {
+    color: red;
+    font-size: small;
+}

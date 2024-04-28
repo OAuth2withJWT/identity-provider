@@ -3,6 +3,8 @@ package app
 import (
 	"crypto/rand"
 	"encoding/hex"
+
+	"github.com/OAuth2withJWT/identity-provider/app/validation"
 )
 
 type ClientService struct {
@@ -29,7 +31,26 @@ type ClientCredentials struct {
 	ClientSecret string
 }
 
+func (req *CreateClientRequest) validateClientRegistrationFields() error {
+	v := validation.New()
+	v.IsEmpty("Client Name", req.ClientName)
+	v.IsEmpty("Scope", req.Scope)
+	v.IsEmpty("Redirect URI", req.RedirectURI)
+
+	err := v.Validate()
+	if len(err.Errors) == 0 {
+		return nil
+	}
+	return err
+}
+
 func (s *ClientService) Create(req CreateClientRequest) (*Client, error) {
+
+	err := req.validateClientRegistrationFields()
+	if err != nil {
+		return nil, err
+	}
+
 	clientID, err := s.generateClientCredentials(16)
 	if err != nil {
 		return nil, err

@@ -1,11 +1,12 @@
 package server
 
 import (
-	"fmt"
+	"encoding/json"
 	"html/template"
 	"net/http"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
+	"github.com/OAuth2withJWT/identity-provider/app/validation"
 )
 
 func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Request) {
@@ -26,18 +27,35 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) handleClientRegistrationForm(w http.ResponseWriter, r *http.Request) {
-
 	client, err := s.app.ClientService.Create(app.CreateClientRequest{
 		ClientName:  r.FormValue("clientName"),
-		Scope:       r.FormValue("scope"),
+		Scope:       r.FormValue("Scope"),
 		RedirectURI: r.FormValue("redirectUri"),
 	})
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		w.Header().Set("Content-Type", "application/json")
+		switch v := err.(type) {
+		case *validation.Error:
+			formErrors := make(map[string]string)
+			for field, errs := range v.Errors {
+				formErrors[field] = errs[0].Error()
+			}
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"error":      err.Error(),
+				"formErrors": formErrors,
+			})
+			return
+		default:
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
-	fmt.Fprintf(w, "{\"clientId\": \"%s\", \"clientSecret\": \"%s\"}", client.ClientId, client.ClientSecret)
-
+	w.Header().Set("Content-Type", "application/json")
+	response := map[string]string{
+		"clientId":     client.ClientId,
+		"clientSecret": client.ClientSecret,
+	}
+	json.NewEncoder(w).Encode(response)
 }
