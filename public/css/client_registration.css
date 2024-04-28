@@ -83,6 +83,7 @@ input[type="submit"]:hover {
 .input-wrapper { 
     position: relative; 
     display: inline-block; 
+    width: 100%;
 } 
 
 .input-wrapper button { 
@@ -114,7 +115,7 @@ input[type="submit"]:hover {
     font-size:smaller;
 }
 
-.deleteButton {
+.delete-button {
     font-size:larger;
     border:none;
     cursor: pointer; 
@@ -123,3 +124,91 @@ input[type="submit"]:hover {
     background-color: transparent;
 }
 
+.popup {
+    width: 42%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    padding-top:10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 1000; 
+}
+
+.popup-content {
+    font-size: smaller;
+}
+
+.popup-content input {
+    width: calc(100% - 50px);
+}
+
+.popup-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.popup-content p {
+    margin-bottom: 3px;
+}
+
+
+.close-btn {
+    position: absolute;
+    top: 6px;
+    right: 12px;
+    font-size:28px;
+    cursor: pointer;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4); 
+    z-index: 999;
+}
+
+.popup-explanation{
+    color:rgb(141, 136, 136);
+    font-size: small;
+}
+
+.copy-button {
+    border: none;
+    background-color: transparent;
+    color: rgb(141, 136, 136);
+    cursor: pointer;
+    z-index: 1;
+    margin-left: auto; 
+}
+
+@media only screen and (max-width: 900px) {
+    .form-container {
+        width: 90%;
+    }
+
+    input {
+        width: 100%;
+    }
+
+    input[type="submit"] {
+        width: 100%;
+    }
+}
+
+@media only screen and (max-width: 600px) {
+    .container {
+        padding: 20px;
+    }
+
+    .form-container {
+        padding: 20px;
+    }
+}
