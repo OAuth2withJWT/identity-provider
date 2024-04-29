@@ -3,9 +3,16 @@ package validation
 import (
 	"fmt"
 	"net/mail"
+	"net/url"
 	"strings"
 	"unicode"
 )
+
+func (v *Validator) IsValidURI(field string, uri string) {
+	if _, err := url.ParseRequestURI(uri); err != nil {
+		v.AddError(field, fmt.Errorf("%s is not a valid URI", field))
+	}
+}
 
 func (v *Validator) IsEmpty(field string, value string) {
 	if strings.TrimSpace(value) == "" {

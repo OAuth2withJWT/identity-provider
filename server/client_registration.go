@@ -29,7 +29,7 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 func (s *Server) handleClientRegistrationForm(w http.ResponseWriter, r *http.Request) {
 	client, err := s.app.ClientService.Create(app.CreateClientRequest{
 		ClientName:  r.FormValue("clientName"),
-		Scope:       r.FormValue("Scope"),
+		Scope:       r.FormValue("scope"),
 		RedirectURI: r.FormValue("redirectUri"),
 	})
 

@@ -1,5 +1,5 @@
 function addEntry() {
-    var scopes = document.getElementById('scope');
+    var scopes = document.getElementById('scope_input');
     var container = document.getElementById('scope_container');
 
     var wrapper = document.createElement('div');
@@ -13,7 +13,9 @@ function addEntry() {
     deleteButton.innerHTML = '&times;';
     deleteButton.classList.add('delete-button');
     deleteButton.onclick = function () {
-        container.removeChild(wrapper)
+        container.removeChild(wrapper);
+        updateScopeValues();
+        checkScopeError();
     };
 
     wrapper.appendChild(enteredText);
@@ -21,6 +23,26 @@ function addEntry() {
     container.appendChild(wrapper);
 
     scopes.value = '';
+    updateScopeValues();
+    checkScopeError();
+}
+
+function updateScopeValues() {
+    var container = document.getElementById('scope_container');
+    var scopeValuesInput = document.getElementById('scope');
+
+    var scopeValues = Array.from(container.querySelectorAll('.entered_text')).map(function (element) {
+        return element.textContent;
+    }).join(', ');
+
+    scopeValuesInput.value = scopeValues;
+}
+
+function checkScopeError() {
+    const scopeErrorElement = document.getElementById("Scope");
+    if (scopeErrorElement && scopeErrorElement.classList.contains("error-message") && scopeErrorElement.textContent.includes("empty")) {
+        scopeErrorElement.textContent = "";
+    }
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -36,6 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .then(response => response.json())
             .then(data => {
                 if (data.formErrors) {
+                    clearErrorDivs()
                     showFieldErrors(data)
                 }
                 else {
@@ -49,7 +72,14 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-function showFieldErrors(data){
+function clearErrorDivs() {
+    const errorElements = document.querySelectorAll(".error-message");
+    errorElements.forEach(element => {
+        element.textContent = "";
+    });
+}
+
+function showFieldErrors(data) {
     Object.keys(data.formErrors).forEach(fieldName => {
         const errorElement = document.getElementById(`${fieldName}`);
         if (errorElement) {
@@ -59,13 +89,18 @@ function showFieldErrors(data){
 }
 
 function showOverlay() {
+    const errorElements = document.querySelectorAll(".error-message");
+    errorElements.forEach(element => {
+        element.textContent = "";
+    });
     const overlay = document.createElement('div');
     overlay.classList.add('overlay');
     document.body.appendChild(overlay);
 }
 
-function showSuccessPopup(data){
-    console.log(data.clientId);
+function showSuccessPopup(data) {
+    const form = document.querySelector("form");
+    form.reset();
     const popup = document.createElement("div");
     popup.classList.add("popup");
     popup.innerHTML = `
@@ -94,6 +129,11 @@ function showSuccessPopup(data){
         hideOverlay();
         document.body.removeChild(popup);
     });
+
+    var container = document.getElementById('scope_container');
+    container.innerHTML = '';
+    updateScopeValues();
+    checkScopeError();
 }
 
 function hideOverlay() {
@@ -106,7 +146,6 @@ function hideOverlay() {
 function copyText(id) {
     var copyText = document.getElementById(id);
     copyText.select();
-    copyText.setSelectionRange(0, 99999);
     navigator.clipboard.writeText(copyText.value);
 }
 
@@ -121,4 +160,4 @@ document.addEventListener("DOMContentLoaded", function () {
             errorElement.textContent = "";
         }
     });
-});
+}); 

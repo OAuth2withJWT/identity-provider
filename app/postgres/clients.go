@@ -28,3 +28,21 @@ func (ur *ClientRepository) Create(req app.CreateClientRequest, credentials app.
 
 	return client, nil
 }
+
+func (ur *ClientRepository) GetClientByName(name string) (app.Client, error) {
+	var client app.Client
+	err := ur.db.QueryRow("SELECT * FROM clients WHERE client_name = $1", name).Scan(&client.Id, &client.ClientName, &client.ClientId, &client.ClientSecret, &client.Scope, &client.RedirectURI)
+	if err != nil {
+		return app.Client{}, err
+	}
+	return client, nil
+}
+
+func (ur *ClientRepository) GetClientByRedirectURI(redirectURI string) (app.Client, error) {
+	var client app.Client
+	err := ur.db.QueryRow("SELECT * FROM clients WHERE redirect_uri = $1", redirectURI).Scan(&client.Id, &client.ClientName, &client.ClientId, &client.ClientSecret, &client.Scope, &client.RedirectURI)
+	if err != nil {
+		return app.Client{}, err
+	}
+	return client, nil
+}

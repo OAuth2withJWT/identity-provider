@@ -24,12 +24,14 @@
                     <label>Scope</label>
                     <div class="explanation">List of scope values the client can request access tokens for.</div>
                     <div class="input-wrapper"> 
-                    <input type="text" name="Scope" id="scope" value="{{index .FormFields "Scope"}}" >
+                    <input type="text" id="scope_input" >
                     <button type="button" onclick="addEntry()">ADD</button>
                     </div>
                     <div class="error-message" id="Scope"></div> 
-              
                     <div id="scope_container"></div>
+                    <input type="hidden" id="scope" name="scope">
+                 
+
                     <label>Redirect URI</label>
                     <div class="explanation">Callback URI called after successful interaction with resource owner.</div>
                     <input type="text" name="redirectUri" id="redirectUri" value="{{index .FormFields "Redirect URI"}}" >
