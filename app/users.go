@@ -53,11 +53,7 @@ func (req *CreateUserRequest) validateRegistrationFields(s *UserService) error {
 		v.AddError("Email", fmt.Errorf("User with that email already exists"))
 	}
 
-	err := v.Validate()
-	if len(err.Errors) == 0 {
-		return nil
-	}
-	return err
+	return v.Validate()
 }
 
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
@@ -131,11 +127,7 @@ func (req *PasswordResetRequest) validateNewPassword() error {
 	v.IsEmpty("Password", req.Password)
 	v.IsValidPassword("Password", req.Password)
 
-	err := v.Validate()
-	if len(err.Errors) == 0 {
-		return nil
-	}
-	return err
+	return v.Validate()
 }
 
 func (s *UserService) ResetPassword(req *PasswordResetRequest) error {
