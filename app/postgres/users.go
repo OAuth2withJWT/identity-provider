@@ -17,11 +17,11 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (ur *UserRepository) Create(req app.CreateUserRequest) (*app.User, error) {
-	row := ur.db.QueryRow("INSERT INTO users (first_name, last_name, email, username, password) VALUES ($1, $2, $3, $4, $5) RETURNING first_name, last_name, email, username, password",
+	row := ur.db.QueryRow("INSERT INTO users (first_name, last_name, email, username, password) VALUES ($1, $2, $3, $4, $5) RETURNING id, first_name, last_name, email, username, password",
 		req.FirstName, req.LastName, req.Email, req.Username, req.Password)
 
 	user := &app.User{}
-	err := row.Scan(&user.FirstName, &user.LastName, &user.Email, &user.Username, &user.Password)
+	err := row.Scan(&user.UserId, &user.FirstName, &user.LastName, &user.Email, &user.Username, &user.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -45,4 +45,13 @@ func (ur *UserRepository) GetUserByID(user_id int) (app.User, error) {
 		return app.User{}, err
 	}
 	return user, nil
+}
+
+func (ur *UserRepository) UpdatePassword(hashedPassword string, userId int) error {
+	query := `UPDATE users SET password = $1 WHERE id = $2`
+	_, err := ur.db.Exec(query, hashedPassword, userId)
+	if err != nil {
+		return err
+	}
+	return nil
 }

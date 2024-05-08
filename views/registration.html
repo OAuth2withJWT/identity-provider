@@ -6,6 +6,21 @@
     <title>Registration</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/public/form.css">
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const form = document.querySelector("form");
+
+            form.addEventListener("input", function(event) {
+                const target = event.target;
+                const errorElement = target.nextElementSibling;
+                const pElement = errorElement.querySelector("p");
+                if (errorElement && errorElement.classList.contains("error-message") && pElement.textContent.includes("empty")) {
+                    errorElement.textContent = "";
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -14,23 +29,44 @@
                 <div class="heading">
                     <h2>Register</h2>
                 </div>
-                {{ if .ErrorMessage }}
-                    <div class="error-message">
-                        <p>{{ .ErrorMessage }}</p>
-                    </div>
-                {{ end }}
                 <form method="POST">
-                    <label>First name:</label><br />
-                    <input type="text" name="firstName" id="firstName"><br />
-                    <label>Last name:</label><br />
-                    <input type="text" name="lastName" id="lastName"><br />
-                    <label>Email:</label><br />
-                    <input type="text" name="email" id="email"><br />
-                    <label>Username:</label><br />
-                    <input type="text" name="username" id="username"><br />
-                    <label>Password:</label><br />
-                    <input type="password" name="password" id="password"><br />
+                    <label>First name:</label>
+                    <input type="text" name="firstName" id="firstName" value="{{index .FormFields "First name"}}" autofocus>
+                    {{ if index .FormErrors "First name" }}
+                        <div class="error-message">
+                            <p>{{index .FormErrors "First name"}}</p>
+                        </div>
+                    {{ end }}
+                    <label>Last name:</label>
+                    <input type="text" name="lastName" id="lastName" value="{{index .FormFields "Last name"}}" >
+                    {{ if index .FormErrors "Last name" }}
+                        <div class="error-message">
+                            <p>{{ index .FormErrors "Last name" }}</p>
+                        </div>
+                    {{ end }}
+                    <label>Email:</label>
+                    <input type="text" name="email" id="email" value="{{index .FormFields "Email"}}" >
+                    {{ if index .FormErrors "Email" }}
+                        <div class="error-message">
+                            <p>{{ index .FormErrors "Email" }}</p>
+                        </div>
+                    {{ end }}
+                    <label>Username:</label>
+                    <input type="text" name="username" id="username" value="{{index .FormFields "Username"}}" >
+                    {{ if index .FormErrors "Username" }}
+                        <div class="error-message">
+                            <p>{{ index .FormErrors "Username" }}</p>
+                        </div>
+                    {{ end }}
+                    <label>Password:</label>
+                    <input type="password" name="password" id="password" value="{{index .FormFields "Password"}}" >
+                    {{ if index .FormErrors "Password" }}
+                        <div class="error-message">
+                            <p>{{ index .FormErrors "Password" }}</p>
+                        </div>
+                    {{ end }}
                     <input type="Submit">
+                    <p class="message">Already have an account? <a href="/login">Login</a></p>
                 </form>
             </div>
         </div>

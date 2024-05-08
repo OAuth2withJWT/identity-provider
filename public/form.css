@@ -8,6 +8,7 @@ body {
     align-items: center;
     height: 100vh;
     max-width: none;
+    padding: 30px;
 }
 
 .form-container {
@@ -22,17 +23,29 @@ body {
     flex-direction: column; 
     align-items: center; 
     box-sizing: border-box;
+    padding: 30px;
 }
 
 .heading {
     text-align: center;
     margin: 0;
+    margin-bottom: 10px;
+}
+
+a, .message {
+    font-size: small;
+    margin: 30px 0; 
+    text-align: center;
+}
+
+a {
+    text-decoration: none;
+    color: #007bff;
 }
 
 .error-message {
     color: red;
     font-size: small;
-    margin: 0;
 }
 
 input {
@@ -40,7 +53,14 @@ input {
     width: 300px;
     border: none;
     border-bottom: 1px solid #ccc; 
-    margin-bottom: 10px;
+    margin-bottom: 20px;
+    margin-top: 10px;
+}
+
+input:focus {
+    border: none;
+    outline: none;
+    border-bottom: 1px solid #0056b3; 
 }
 
 input[type="submit"] {
@@ -51,7 +71,7 @@ input[type="submit"] {
     border-radius: 5px;
     cursor: pointer;
     width: 300px;
-    margin-bottom: 10px;
+    margin-top: 30px;
 }
 
 input[type="submit"]:hover {

@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS verifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL UNIQUE,
+    code VARCHAR(255) NOT NULL,
+    verified BOOLEAN NOT NULL
+);

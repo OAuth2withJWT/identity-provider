@@ -1,9 +1,9 @@
 package app
 
 import (
-	"strings"
-	"unicode"
+	"fmt"
 
+	"github.com/OAuth2withJWT/identity-provider/app/validation"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,58 +34,69 @@ type CreateUserRequest struct {
 	Password  string
 }
 
-type FieldError struct {
-	Message string
+type PasswordResetRequest struct {
+	UserId        int
+	Password      string
+	ErrorPassword string
 }
 
-func (e *FieldError) Error() string {
-	return e.Message
+func (req *CreateUserRequest) validateRegistrationFields(s *UserService) error {
+	v := validation.New()
+	v.IsEmpty("First name", req.FirstName)
+	v.IsEmpty("Last name", req.LastName)
+	v.IsEmpty("Username", req.Username)
+	v.IsEmpty("Email", req.Email)
+	v.IsEmpty("Password", req.Password)
+	v.IsEmail("Email", req.Email)
+	v.IsValidPassword("Password", req.Password)
+	if s.hasUserWithEmail(req.Email) {
+		v.AddError("Email", fmt.Errorf("User with that email already exists"))
+	}
+
+	return v.Validate()
 }
 
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
-	ErrorMessage := fieldsNotEmpty(req)
-	if ErrorMessage != "" {
-		return nil, &FieldError{Message: ErrorMessage}
+	err := req.validateRegistrationFields(s)
+	if err != nil {
+		return nil, err
 	}
 
-	ErrorMessage = validatePassword(req.Password)
-	if ErrorMessage != "" {
-		return nil, &FieldError{Message: ErrorMessage}
-	}
-
-	hashedPassword, err := HashPassword(req.Password)
+	hashedPassword, err := hashPassword(req.Password)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Password = hashedPassword
-	user, err := s.repository.Create(req)
 
+	newUser, err := s.repository.Create(req)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return newUser, nil
 }
 
 func (s *UserService) ValidateUserCredentials(email, password string) (User, error) {
+	errorMessage := "Invalid email or password"
 	user, err := s.repository.GetUserByEmail(email)
 	if err != nil {
-		return User{}, err
+		return User{}, fmt.Errorf(errorMessage)
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return User{}, err
+		return User{}, fmt.Errorf(errorMessage)
 	}
 
 	return user, nil
 }
 
 type UserRepository interface {
-	Create(CreateUserRequest) (*User, error)
+	Create(req CreateUserRequest) (*User, error)
 	GetUserByEmail(email string) (User, error)
 	GetUserByID(user_id int) (User, error)
+	UpdatePassword(hashedPassword string, userId int) error
 }
 
 func (s *UserService) GetUserByEmail(email string) (User, error) {
@@ -97,6 +108,11 @@ func (s *UserService) GetUserByEmail(email string) (User, error) {
 	return user, nil
 }
 
+func (s *UserService) hasUserWithEmail(email string) bool {
+	user, _ := s.repository.GetUserByEmail(email)
+	return user != (User{})
+}
+
 func (s *UserService) GetUserByID(user_id int) (User, error) {
 	user, err := s.repository.GetUserByID(user_id)
 	if err != nil {
@@ -106,63 +122,33 @@ func (s *UserService) GetUserByID(user_id int) (User, error) {
 	return user, nil
 }
 
-func HashPassword(password string) (string, error) {
+func (req *PasswordResetRequest) validateNewPassword() error {
+	v := validation.New()
+	v.IsEmpty("Password", req.Password)
+	v.IsValidPassword("Password", req.Password)
+
+	return v.Validate()
+}
+
+func (s *UserService) ResetPassword(req *PasswordResetRequest) error {
+	err := req.validateNewPassword()
+	if err != nil {
+		return err
+	}
+
+	hashedPassword, err := hashPassword(req.Password)
+	if err != nil {
+		return err
+	}
+
+	err = s.repository.UpdatePassword(hashedPassword, req.UserId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
-}
-
-func fieldsNotEmpty(req CreateUserRequest) string {
-	firstName := strings.TrimSpace(req.FirstName)
-	lastName := strings.TrimSpace(req.LastName)
-	email := strings.TrimSpace(req.Email)
-	username := strings.TrimSpace(req.Username)
-	password := req.Password
-
-	if firstName == "" || lastName == "" || email == "" || username == "" || password == "" {
-		return "Fields cannot be empty"
-	}
-
-	return ""
-}
-
-func validatePassword(password string) string {
-	var errors []string
-
-	rules := map[string]func(string) bool{
-		"at least 8 characters": func(s string) bool { return len(s) >= 8 },
-		"one uppercase letter":  func(s string) bool { return containsType(s, unicode.IsUpper) },
-		"one lowercase letter":  func(s string) bool { return containsType(s, unicode.IsLower) },
-		"one digit":             func(s string) bool { return containsType(s, unicode.IsDigit) },
-		"one special character": func(s string) bool { return containsSpecialChar(s) },
-	}
-
-	for rule, isValid := range rules {
-		if !isValid(password) {
-			errors = append(errors, rule)
-		}
-	}
-
-	if len(errors) > 0 {
-		return "Password must contain " + strings.Join(errors, ", ")
-	}
-
-	return ""
-}
-
-func containsType(s string, check func(rune) bool) bool {
-	for _, char := range s {
-		if check(char) {
-			return true
-		}
-	}
-	return false
-}
-
-func containsSpecialChar(s string) bool {
-	for _, char := range s {
-		if unicode.IsPunct(char) || unicode.IsSymbol(char) {
-			return true
-		}
-	}
-	return false
 }

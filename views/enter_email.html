@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Enter email</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/public/form.css">
 </head>
@@ -12,21 +12,17 @@
         <div class="form-wrapper">
             <div class="form-container">
                 <div class="heading">
-                    <h2>Login</h2>
+                    <h4>Enter the email address associated with your account.</h4>
                 </div>
-                {{ if .ErrorMessage }}
+                {{ if index .FormErrors "Email" }}
                     <div class="error-message">
-                        <p>{{ .ErrorMessage }}</p>
+                        <p>{{ index .FormErrors "Email" }}</p>
                     </div>
                 {{ end }}
-                <form action="/login" method="post">
+                <form action="/request-password-reset" method="post">
                     <label for="email">Email:</label>
-                    <input type="text" id="email" name="email" value="{{ .Email }}" autofocus required>
-                    <label for="password">Password:</label>
-                    <input type="password" id="password" name="password" value="{{ .Password }}" required>
-                    <a href="/request-password-reset">Forgot your password?</a>
-                    <input type="submit" value="Login">
-                    <p class="message">Don't have an account? <a href="/registration">Register</a></p>
+                    <input type="text" id="email" name="email" value="{{ index .FormFields "Email" }}" autofocus>
+                    <input type="submit" value="Continue">
                 </form>
             </div>
         </div>

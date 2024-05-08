@@ -30,17 +30,33 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	user, err := s.app.UserService.ValidateUserCredentials(email, password)
+
 	if err != nil {
-		tmpl, err := template.ParseFiles("views/login.html")
+		data := struct {
+			Email        string
+			Password     string
+			ErrorMessage string
+		}{Email: email, Password: password, ErrorMessage: err.Error()}
+
+		tmpl, _ := template.ParseFiles("views/login.html")
+		err = tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		return
+	}
+
+	err = s.app.VerificationService.IsUserVerified(user.UserId)
+
+	if err != nil {
 		data := struct {
+			Email        string
+			Password     string
 			ErrorMessage string
-		}{
-			ErrorMessage: "Invalid email or password",
-		}
+		}{Email: email, Password: password, ErrorMessage: err.Error()}
+
+		tmpl, _ := template.ParseFiles("views/login.html")
 		err = tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
