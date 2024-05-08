@@ -46,11 +46,7 @@ func (req *CreateClientRequest) validateClientRegistrationFields(s *ClientServic
 		v.AddError("Redirect URI", fmt.Errorf("Client with that redirect URI already exists"))
 	}
 
-	err := v.Validate()
-	if len(err.Errors) == 0 {
-		return nil
-	}
-	return err
+	return v.Validate()
 }
 
 func (s *ClientService) hasClientWithName(name string) bool {

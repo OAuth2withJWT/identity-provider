@@ -53,11 +53,7 @@ func (req *CreateUserRequest) validateRegistrationFields(s *UserService) error {
 		v.AddError("Email", fmt.Errorf("User with that email already exists"))
 	}
 
-	err := v.Validate()
-	if len(err.Errors) == 0 {
-		return nil
-	}
-	return err
+	return v.Validate()
 }
 
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
@@ -131,11 +127,7 @@ func (req *PasswordResetRequest) validateNewPassword() error {
 	v.IsEmpty("Password", req.Password)
 	v.IsValidPassword("Password", req.Password)
 
-	err := v.Validate()
-	if len(err.Errors) == 0 {
-		return nil
-	}
-	return err
+	return v.Validate()
 }
 
 func (s *UserService) ResetPassword(req *PasswordResetRequest) error {
@@ -159,18 +151,4 @@ func (s *UserService) ResetPassword(req *PasswordResetRequest) error {
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
-}
-
-func (req *PasswordResetRequest) setPasswordResetErrors(errors map[string][]error) bool {
-	if len(errors) == 0 {
-		return true
-	}
-
-	for field, err := range errors {
-		if field == "Password" {
-			req.ErrorPassword = err[0].Error()
-		}
-	}
-
-	return false
 }

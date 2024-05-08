@@ -1,5 +1,5 @@
 build/
 .env
 migrate.linux-amd64.tar.gz
-.tmp
 tmp/
+

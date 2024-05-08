@@ -18,9 +18,9 @@ func (e *Error) Error() string {
 	return "validation error"
 }
 
-func (v *Validator) Validate() *Error {
+func (v *Validator) Validate() error {
 	if len(v.errors) == 0 {
-		return &Error{}
+		return nil
 	}
 	return &Error{Errors: v.errors}
 }
