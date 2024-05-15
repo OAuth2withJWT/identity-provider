@@ -27,7 +27,7 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 		},
 	}
 
-	tmpl, _ := template.ParseFiles("public/html/registration.html")
+	tmpl, _ := template.ParseFiles("templates/registration.html")
 	err = tmpl.Execute(w, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -63,7 +63,7 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 				page.FormErrors[field] = errs[0].Error()
 			}
 
-			tmpl, _ := template.ParseFiles("public/html/registration.html")
+			tmpl, _ := template.ParseFiles("templates/registration.html")
 			err := tmpl.Execute(w, page)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

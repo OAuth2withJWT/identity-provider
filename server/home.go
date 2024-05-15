@@ -17,7 +17,7 @@ func (s *Server) handleHomePage(w http.ResponseWriter, r *http.Request) {
 			username = user.Username
 		}
 	}
-	tmpl, _ := template.ParseFiles("public/html/index.html")
+	tmpl, _ := template.ParseFiles("templates/index.html")
 	err = tmpl.Execute(w, struct {
 		Username string
 	}{username})
