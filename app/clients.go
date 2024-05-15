@@ -13,32 +13,32 @@ type ClientService struct {
 }
 
 type Client struct {
-	Id           int
-	ClientName   string
-	ClientId     string
-	ClientSecret string
-	Scope        string
-	RedirectURI  string
+	Id          string
+	Name        string
+	Secret      string
+	Scope       string
+	RedirectURI string
+	CreatedBy   int
 }
 
 type CreateClientRequest struct {
-	ClientName  string
+	Name        string
 	Scope       string
 	RedirectURI string
 }
 
 type ClientCredentials struct {
-	ClientID     string
-	ClientSecret string
+	Id     string
+	Secret string
 }
 
 func (req *CreateClientRequest) validateClientRegistrationFields(s *ClientService) error {
 	v := validation.New()
-	v.IsEmpty("Client Name", req.ClientName)
+	v.IsEmpty("Client Name", req.Name)
 	v.IsEmpty("Scope", req.Scope)
 	v.IsEmpty("Redirect URI", req.RedirectURI)
 	v.IsValidURI("Redirect URI", req.RedirectURI)
-	if s.hasClientWithName(req.ClientName) {
+	if s.hasClientWithName(req.Name) {
 		v.AddError("Client Name", fmt.Errorf("Client with that name already exists"))
 	}
 

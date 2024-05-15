@@ -28,7 +28,7 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 
 func (s *Server) handleClientRegistrationForm(w http.ResponseWriter, r *http.Request) {
 	client, err := s.app.ClientService.Create(app.CreateClientRequest{
-		ClientName:  r.FormValue("clientName"),
+		Name:        r.FormValue("clientName"),
 		Scope:       r.FormValue("scope"),
 		RedirectURI: r.FormValue("redirectUri"),
 	})
@@ -54,8 +54,8 @@ func (s *Server) handleClientRegistrationForm(w http.ResponseWriter, r *http.Req
 
 	w.Header().Set("Content-Type", "application/json")
 	response := map[string]string{
-		"clientId":     client.ClientId,
-		"clientSecret": client.ClientSecret,
+		"clientId":     client.Id,
+		"clientSecret": client.Secret,
 	}
 	json.NewEncoder(w).Encode(response)
 }
