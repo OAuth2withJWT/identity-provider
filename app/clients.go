@@ -25,6 +25,7 @@ type CreateClientRequest struct {
 	Name        string
 	Scope       string
 	RedirectURI string
+	CreatedBy   int
 }
 
 type ClientCredentials struct {

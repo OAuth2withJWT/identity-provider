@@ -1,6 +1,21 @@
 function addEntry() {
     var scopes = document.getElementById('scope_input');
     var container = document.getElementById('scope_container');
+    var errorElement = document.getElementById('Scope');
+
+    if (!scopes.value.trim()) {
+        container.style.marginTop = '8';
+        errorElement.textContent = "Scope cannot be empty";
+        return;
+    }
+    
+    if (scopes.value.includes(' ')) {
+        container.style.marginTop = '8';
+        errorElement.textContent = "Scope cannot contain spaces";
+        return;
+    }
+
+    container.style.marginTop = '0';
 
     var wrapper = document.createElement('div');
     wrapper.classList.add('wrapper');

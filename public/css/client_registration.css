@@ -40,11 +40,6 @@ a {
     color: #007bff;
 }
 
-.error-message {
-    color: red;
-    font-size: small;
-}
-
 .explanation{
     margin-top: 10px;
     color:rgb(141, 136, 136);
@@ -99,7 +94,8 @@ input[type="submit"]:hover {
 #scope_container {
     display: flex;
     flex-wrap: wrap; 
-    gap: 8px; 
+    gap: 8px;
+    margin-top: 0;
     margin-bottom: 20px;
 }
 
@@ -216,4 +212,5 @@ input[type="submit"]:hover {
 .error-message {
     color: red;
     font-size: small;
+    margin-bottom: 5px;
 }

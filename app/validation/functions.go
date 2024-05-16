@@ -9,9 +9,18 @@ import (
 )
 
 func (v *Validator) IsValidURI(field string, uri string) {
-	if _, err := url.ParseRequestURI(uri); err != nil {
+	parsedURI, err := url.ParseRequestURI(uri)
+
+	if err != nil {
 		v.AddError(field, fmt.Errorf("%s is not a valid URI", field))
+		return
 	}
+
+	if parsedURI.Scheme != "https" {
+		v.AddError(field, fmt.Errorf("%s must use https scheme", field))
+		return
+	}
+
 }
 
 func (v *Validator) IsEmpty(field string, value string) {

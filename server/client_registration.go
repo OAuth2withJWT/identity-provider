@@ -10,6 +10,14 @@ import (
 )
 
 func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Request) {
+
+	sessionID := getSessionIDFromCookie(r)
+	_, err := s.app.SessionService.ValidateSession(sessionID)
+
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+
 	page := Page{
 		FormFields: map[string]string{
 			"Client Name":  "",
@@ -19,7 +27,7 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 	}
 
 	tmpl, _ := template.ParseFiles("templates/client_registration.html")
-	err := tmpl.Execute(w, page)
+	err = tmpl.Execute(w, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -27,10 +35,19 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) handleClientRegistrationForm(w http.ResponseWriter, r *http.Request) {
+
+	sessionID := getSessionIDFromCookie(r)
+	session, err := s.app.SessionService.ValidateSession(sessionID)
+
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+
 	client, err := s.app.ClientService.Create(app.CreateClientRequest{
 		Name:        r.FormValue("clientName"),
 		Scope:       r.FormValue("scope"),
 		RedirectURI: r.FormValue("redirectUri"),
+		CreatedBy:   session.UserId,
 	})
 
 	if err != nil {
