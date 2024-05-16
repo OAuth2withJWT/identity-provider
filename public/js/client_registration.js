@@ -7,7 +7,7 @@ function addEntry() {
         errorElement.textContent = "Scope cannot be empty";
         return;
     }
-    
+
     if (scopes.value.includes(' ')) {
         errorElement.textContent = "Scope cannot contain spaces";
         return;
@@ -64,31 +64,32 @@ document.addEventListener("DOMContentLoaded", function () {
         const formData = new FormData(form);
         fetch("/client-registration", {
             method: "POST",
-            body: formData
+            body: formData,
+            credentials: "same-origin"
         })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            } else {
-                throw new Error(response.statusText);
-            }
-        })
-        .then(data => {
-            if (data.formErrors) {
-                clearErrorDivs();
-                showFieldErrors(data);
-            } else {
-                showOverlay();
-                showSuccessPopup(data);
-            }
-        })
-        .catch(error => {
-            if (error.message === 'Unauthorized') {
-                window.location.href = '/login'; 
-            } else {
-                console.error('Network error:', error.message); 
-            }
-        });
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error(response.statusText);
+                }
+            })
+            .then(data => {
+                if (data.formErrors) {
+                    clearErrorDivs();
+                    showFieldErrors(data);
+                } else {
+                    showOverlay();
+                    showSuccessPopup(data);
+                }
+            })
+            .catch(error => {
+                if (error.message === 'Unauthorized') {
+                    window.location.href = '/login';
+                } else {
+                    console.error('Network error:', error.message);
+                }
+            });
     });
 });
 
