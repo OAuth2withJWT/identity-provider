@@ -121,7 +121,6 @@ function showSuccessPopup(data) {
     popup.innerHTML = `
         <h3>OAuth client created</h3>
         <div class="popup-content">
-            <span class="close-btn">&times;</span>
             <div class="popup-explanation">Your client access has been successfully created. Copy your client id and secret now. You will not be able to access them again.</div>
             <p>Your Client ID </p>
             <div class="popup-wrapper">
@@ -133,7 +132,10 @@ function showSuccessPopup(data) {
                 <input type="text" id="clientSecret" value= ${data.clientSecret} readonly />
                 <button class="copy-button" onclick="copyText('clientSecret')">COPY</button>
             </div>
-        </div>
+            <div class="close-btn-container">
+                <button type="button" class="close-btn">Close</button>
+            </div>
+        </div>     
 `;
     document.body.appendChild(popup);
 

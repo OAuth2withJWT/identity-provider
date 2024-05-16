@@ -75,6 +75,26 @@ input[type="submit"]:hover {
     background-color: #0056b3;
 }
 
+.close-btn {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top:5px;
+}
+
+.close-btn:hover {
+    background-color: #0056b3;
+}
+
+.close-btn-container {
+    display: flex;
+    justify-content: center;
+}
+
 .input-wrapper { 
     position: relative; 
     display: inline-block; 
@@ -150,15 +170,6 @@ input[type="submit"]:hover {
 
 .popup-content p {
     margin-bottom: 3px;
-}
-
-
-.close-btn {
-    position: absolute;
-    top: 6px;
-    right: 12px;
-    font-size:28px;
-    cursor: pointer;
 }
 
 .overlay {
