@@ -4,18 +4,14 @@ function addEntry() {
     var errorElement = document.getElementById('Scope');
 
     if (!scopes.value.trim()) {
-        container.style.marginTop = '8';
         errorElement.textContent = "Scope cannot be empty";
         return;
     }
     
     if (scopes.value.includes(' ')) {
-        container.style.marginTop = '8';
         errorElement.textContent = "Scope cannot contain spaces";
         return;
     }
-
-    container.style.marginTop = '0';
 
     var wrapper = document.createElement('div');
     wrapper.classList.add('wrapper');
@@ -70,20 +66,29 @@ document.addEventListener("DOMContentLoaded", function () {
             method: "POST",
             body: formData
         })
-            .then(response => response.json())
-            .then(data => {
-                if (data.formErrors) {
-                    clearErrorDivs()
-                    showFieldErrors(data)
-                }
-                else {
-                    showOverlay();
-                    showSuccessPopup(data);
-                }
-            })
-            .catch(error => {
-                console.error('An error occurred:', error);
-            });
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error(response.statusText);
+            }
+        })
+        .then(data => {
+            if (data.formErrors) {
+                clearErrorDivs();
+                showFieldErrors(data);
+            } else {
+                showOverlay();
+                showSuccessPopup(data);
+            }
+        })
+        .catch(error => {
+            if (error.message === 'Unauthorized') {
+                window.location.href = '/login'; 
+            } else {
+                console.error('Network error:', error.message); 
+            }
+        });
     });
 });
 

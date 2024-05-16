@@ -15,7 +15,7 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 	_, err := s.app.SessionService.ValidateSession(sessionID)
 
 	if err != nil {
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Redirect(w, r, "/login", http.StatusFound)
 	}
 
 	page := Page{
@@ -40,7 +40,8 @@ func (s *Server) handleClientRegistrationForm(w http.ResponseWriter, r *http.Req
 	session, err := s.app.SessionService.ValidateSession(sessionID)
 
 	if err != nil {
-		http.Redirect(w, r, "/", http.StatusFound)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
 
 	client, err := s.app.ClientService.Create(app.CreateClientRequest{
