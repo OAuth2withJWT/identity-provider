@@ -26,7 +26,7 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 		},
 	}
 
-	tmpl, _ := template.ParseFiles("templates/client_registration.html")
+	tmpl, _ := template.ParseFiles("views/client_registration.html")
 	err = tmpl.Execute(w, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -32,7 +32,7 @@ func (s *Server) handlePasswordResetPage(w http.ResponseWriter, r *http.Request)
 		http.Redirect(w, r, "/account-message?status=verification-error", http.StatusFound)
 	}
 
-	tmpl, _ := template.ParseFiles("templates/password_reset.html")
+	tmpl, _ := template.ParseFiles("views/password_reset.html")
 	err = tmpl.Execute(w, page)
 
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *Server) handlePasswordResetForm(w http.ResponseWriter, r *http.Request)
 
 		page.FormErrors["Password"] = "Passwords don't match"
 
-		tmpl, _ := template.ParseFiles("templates/password_reset.html")
+		tmpl, _ := template.ParseFiles("views/password_reset.html")
 		err := tmpl.Execute(w, page)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -83,7 +83,7 @@ func (s *Server) handlePasswordResetForm(w http.ResponseWriter, r *http.Request)
 			page.FormErrors = make(map[string]string)
 
 			page.FormErrors["Password"] = v.Errors["Password"][0].Error()
-			tmpl, _ := template.ParseFiles("templates/password_reset.html")
+			tmpl, _ := template.ParseFiles("views/password_reset.html")
 			err := tmpl.Execute(w, page)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
