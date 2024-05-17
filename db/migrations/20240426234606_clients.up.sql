@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS clients (
+    id VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    secret VARCHAR(255) NOT NULL,
+    scope VARCHAR(255) NOT NULL,
+    redirect_uri VARCHAR(255) NOT NULL,
+    created_by INT NOT NULL
+);

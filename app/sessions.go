@@ -50,7 +50,7 @@ func (s *SessionService) ValidateSession(sessionID string) (Session, error) {
 	return session, nil
 }
 
-func (s *SessionService) GenerateSessionID() (string, error) {
+func (s *SessionService) generateSessionID() (string, error) {
 	randomBytes := make([]byte, 32)
 	_, err := rand.Read(randomBytes)
 	if err != nil {
@@ -60,7 +60,7 @@ func (s *SessionService) GenerateSessionID() (string, error) {
 }
 
 func (s *SessionService) CreateSession(userID int, expiresAt time.Time) (string, error) {
-	sessionID, err := s.GenerateSessionID()
+	sessionID, err := s.generateSessionID()
 	if err != nil {
 		return "", err
 	}

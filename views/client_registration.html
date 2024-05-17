@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/public/css/client_registration.css">
+    <script src="public/js/client_registration.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <div class="form-wrapper">
+            <div class="form-container">
+                <div class="heading">
+                    <h2>Client Registration</h2>
+                </div>
+                <form method="POST">
+                    <label>Client Name</label>
+                    <input type="text" name="clientName" id="clientName" value="{{index .FormFields "Client Name"}}" autofocus>
+                    <div class="error-message" id="Client Name"></div> 
+               
+                    <label>Scope</label>
+                    <div class="explanation">List of scope values the client can request access tokens for.</div>
+                    <div class="input-wrapper"> 
+                    <input type="text" id="scope_input" >
+                    <button type="button" onclick="addEntry()">ADD</button>
+                    </div>
+          
+                    <div id="scope_container"></div>
+                    <div class="error-message" id="Scope"></div> 
+                    <input type="hidden" id="scope" name="scope">
+                 
+
+                    <label>Redirect URI</label>
+                    <div class="explanation">Callback URI called after successful interaction with resource owner.</div>
+                    <input type="text" name="redirectUri" id="redirectUri" value="{{index .FormFields "Redirect URI"}}" >
+                    <div class="error-message" id="Redirect URI"></div> 
+              
+                    <input type="submit" value="Create">
+                </form>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

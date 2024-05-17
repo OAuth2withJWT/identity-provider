@@ -41,4 +41,6 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/request-password-reset", s.handleEnterEmailPage).Methods("GET")
 	s.router.HandleFunc("/request-password-reset", s.handleEnterEmailForm).Methods("POST")
 	s.router.HandleFunc("/account-message", s.handleMessage).Methods("GET")
+	s.router.HandleFunc("/client-registration", s.handleClientRegistrationPage).Methods("GET")
+	s.router.HandleFunc("/client-registration", s.handleClientRegistrationForm).Methods("POST")
 }

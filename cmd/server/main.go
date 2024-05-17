@@ -19,11 +19,13 @@ func main() {
 	userRepository := postgres.NewUserRepository(db)
 	sessionRepository := postgres.NewSessionRepository(db)
 	verificationRepository := postgres.NewVerificationRepository(db)
+	clientRepository := postgres.NewClientRepository(db)
 
 	app := app.Application{
 		UserService:         app.NewUserService(userRepository),
 		SessionService:      app.NewSessionService(sessionRepository),
 		VerificationService: app.NewVerificationService(verificationRepository),
+		ClientService:       app.NewClientService(clientRepository),
 	}
 	s := server.New(&app)
 
