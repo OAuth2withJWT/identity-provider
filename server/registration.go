@@ -10,10 +10,9 @@ import (
 )
 
 func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) {
-	sessionID := getSessionIDFromCookie(r)
-	_, err := s.app.SessionService.ValidateSession(sessionID)
+	user, ok := r.Context().Value("user").(app.User)
 
-	if err == nil {
+	if ok && user != (app.User{}) {
 		http.Redirect(w, r, "/", http.StatusFound)
 	}
 
@@ -28,7 +27,7 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	tmpl, _ := template.ParseFiles("views/registration.html")
-	err = tmpl.Execute(w, page)
+	err := tmpl.Execute(w, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

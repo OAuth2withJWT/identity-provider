@@ -3,24 +3,27 @@ package server
 import (
 	"html/template"
 	"net/http"
+
+	"github.com/OAuth2withJWT/identity-provider/app"
 )
 
 func (s *Server) handleHomePage(w http.ResponseWriter, r *http.Request) {
-	sessionID := getSessionIDFromCookie(r)
-	session, err := s.app.SessionService.ValidateSession(sessionID)
-
+	user, ok := r.Context().Value("user").(app.User)
 	var username string
 
-	if err == nil {
-		user, err := s.app.UserService.GetUserByID(session.UserId)
-		if err == nil {
-			username = user.Username
-		}
+	if ok && user != (app.User{}) {
+		username = user.Username
 	}
-	tmpl, _ := template.ParseFiles("views/index.html")
+
+	tmpl, err := template.ParseFiles("views/index.html")
+	if err != nil {
+		http.Error(w, "Error parsing template", http.StatusInternalServerError)
+		return
+	}
+
 	err = tmpl.Execute(w, struct {
 		Username string
-	}{username})
+	}{Username: username})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -40,7 +40,7 @@ type PasswordResetRequest struct {
 	ErrorPassword string
 }
 
-func (req *CreateUserRequest) validateRegistrationFields(s *UserService) error {
+func (req *CreateUserRequest) validate(s *UserService) error {
 	v := validation.New()
 	v.IsEmpty("First name", req.FirstName)
 	v.IsEmpty("Last name", req.LastName)
@@ -57,7 +57,7 @@ func (req *CreateUserRequest) validateRegistrationFields(s *UserService) error {
 }
 
 func (s *UserService) Create(req CreateUserRequest) (*User, error) {
-	err := req.validateRegistrationFields(s)
+	err := req.validate(s)
 	if err != nil {
 		return nil, err
 	}

@@ -9,20 +9,19 @@ import (
 )
 
 func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
-	sessionID := getSessionIDFromCookie(r)
-	_, err := s.app.SessionService.ValidateSession(sessionID)
+	user, ok := r.Context().Value("user").(app.User)
 
+	if ok && user != (app.User{}) {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+
+	tmpl, _ := template.ParseFiles("views/login.html")
+	err := tmpl.Execute(w, nil)
 	if err != nil {
-		tmpl, _ := template.ParseFiles("views/login.html")
-		err := tmpl.Execute(w, nil)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/", http.StatusFound)
 }
 
 func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
