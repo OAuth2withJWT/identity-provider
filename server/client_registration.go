@@ -10,12 +10,6 @@ import (
 )
 
 func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(app.User)
-
-	if !ok || user == (app.User{}) {
-		http.Redirect(w, r, "/login", http.StatusFound)
-	}
-
 	page := Page{
 		FormFields: map[string]string{
 			"Client Name":  "",
@@ -24,8 +18,13 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 		},
 	}
 
-	tmpl, _ := template.ParseFiles("views/client_registration.html")
-	err := tmpl.Execute(w, page)
+	tmpl, err := template.ParseFiles("views/client_registration.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -33,11 +32,7 @@ func (s *Server) handleClientRegistrationPage(w http.ResponseWriter, r *http.Req
 }
 
 func (s *Server) handleClientRegistrationForm(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(app.User)
-
-	if !ok || user == (app.User{}) {
-		http.Redirect(w, r, "/login", http.StatusFound)
-	}
+	user := r.Context().Value(userContextKey).(app.User)
 
 	client, err := s.app.ClientService.Create(app.CreateClientRequest{
 		Name:        r.FormValue("clientName"),

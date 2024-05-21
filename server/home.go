@@ -8,22 +8,17 @@ import (
 )
 
 func (s *Server) handleHomePage(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(app.User)
-	var username string
-
-	if ok && user != (app.User{}) {
-		username = user.Username
-	}
+	user, _ := r.Context().Value(userContextKey).(app.User)
 
 	tmpl, err := template.ParseFiles("views/index.html")
 	if err != nil {
-		http.Error(w, "Error parsing template", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = tmpl.Execute(w, struct {
 		Username string
-	}{Username: username})
+	}{user.Username})
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

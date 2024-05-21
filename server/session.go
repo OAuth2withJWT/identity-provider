@@ -8,19 +8,36 @@ import (
 	"github.com/OAuth2withJWT/identity-provider/app"
 )
 
-func (s *Server) authenticate(next http.HandlerFunc) http.Handler {
+type contextKey string
+
+const userContextKey contextKey = "user"
+
+func (s *Server) withUser(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionID := getSessionIDFromCookie(r)
 		session, err := s.app.SessionService.ValidateSession(sessionID)
 
 		if err == nil {
 			user, _ := s.app.UserService.GetUserByID(session.UserId)
-			ctx := context.WithValue(r.Context(), "user", user)
+			ctx := context.WithValue(r.Context(), userContextKey, user)
 			r = r.WithContext(ctx)
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (s *Server) protected(next http.Handler) http.Handler {
+	return s.withUser(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, ok := r.Context().Value("user").(app.User)
+
+		if !ok {
+			http.Redirect(w, r, "/login", http.StatusFound)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	}))
 }
 
 func setSessionCookie(w http.ResponseWriter, sessionID string) {

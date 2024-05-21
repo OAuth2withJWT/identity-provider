@@ -10,10 +10,10 @@ import (
 )
 
 func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(app.User)
 
-	if ok && user != (app.User{}) {
+	if _, ok := r.Context().Value(userContextKey).(app.User); ok {
 		http.Redirect(w, r, "/", http.StatusFound)
+		return
 	}
 
 	page := Page{
@@ -26,8 +26,13 @@ func (s *Server) handleRegistrationPage(w http.ResponseWriter, r *http.Request) 
 		},
 	}
 
-	tmpl, _ := template.ParseFiles("views/registration.html")
-	err := tmpl.Execute(w, page)
+	tmpl, err := template.ParseFiles("views/registration.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, page)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -62,8 +67,13 @@ func (s *Server) handleRegistrationForm(w http.ResponseWriter, r *http.Request) 
 				page.FormErrors[field] = errs[0].Error()
 			}
 
-			tmpl, _ := template.ParseFiles("views/registration.html")
-			err := tmpl.Execute(w, page)
+			tmpl, err := template.ParseFiles("views/registration.html")
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			err = tmpl.Execute(w, page)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return

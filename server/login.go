@@ -9,14 +9,18 @@ import (
 )
 
 func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
-	user, ok := r.Context().Value("user").(app.User)
-
-	if ok && user != (app.User{}) {
+	if _, ok := r.Context().Value(userContextKey).(app.User); ok {
 		http.Redirect(w, r, "/", http.StatusFound)
+		return
 	}
 
-	tmpl, _ := template.ParseFiles("views/login.html")
-	err := tmpl.Execute(w, nil)
+	tmpl, err := template.ParseFiles("views/login.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tmpl.Execute(w, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -37,7 +41,12 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 			ErrorMessage string
 		}{Email: email, Password: password, ErrorMessage: err.Error()}
 
-		tmpl, _ := template.ParseFiles("views/login.html")
+		tmpl, err := template.ParseFiles("views/login.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		err = tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -55,7 +64,11 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 			ErrorMessage string
 		}{Email: email, Password: password, ErrorMessage: err.Error()}
 
-		tmpl, _ := template.ParseFiles("views/login.html")
+		tmpl, err := template.ParseFiles("views/login.html")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		err = tmpl.Execute(w, data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
