@@ -29,7 +29,7 @@ func (s *Server) withUser(next http.HandlerFunc) http.Handler {
 
 func (s *Server) protected(next http.Handler) http.Handler {
 	return s.withUser(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, ok := r.Context().Value("user").(app.User)
+		_, ok := r.Context().Value(userContextKey).(app.User)
 
 		if !ok {
 			http.Redirect(w, r, "/login", http.StatusFound)
