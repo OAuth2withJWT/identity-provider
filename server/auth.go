@@ -29,10 +29,7 @@ func (s *Server) handleAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//login
-
-	//consent
-
+	//example : http://localhost:8080/oauth2/auth?response_type=code&client_id=a17c21ed&redirect_uri=https%3A%2F%2Fexample-app.com%2Fauth&scope=photos&state=5ca75bd30
 	//authorizationCode, _ := s.app.ClientService.GenerateAuthorizationCode(clientID, redirectURI, scope)
 
 	//http.Redirect(w, r, redirectURI+"?code="+authorizationCode+"&state="+state, http.StatusFound)
