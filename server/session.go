@@ -18,7 +18,11 @@ func (s *Server) withUser(next http.HandlerFunc) http.Handler {
 		session, err := s.app.SessionService.ValidateSession(sessionID)
 
 		if err == nil {
-			user, _ := s.app.UserService.GetUserByID(session.UserId)
+			user, nil := s.app.UserService.GetUserByID(session.UserId)
+			if err != nil {
+				http.Error(w, "unauthorized_user", http.StatusUnauthorized)
+				return
+			}
 			ctx := context.WithValue(r.Context(), userContextKey, user)
 			r = r.WithContext(ctx)
 		}

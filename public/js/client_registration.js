@@ -44,7 +44,7 @@ function updateScopeValues() {
 
     var scopeValues = Array.from(container.querySelectorAll('.entered_text')).map(function (element) {
         return element.textContent;
-    }).join(', ');
+    }).join(',');
 
     scopeValuesInput.value = scopeValues;
 }

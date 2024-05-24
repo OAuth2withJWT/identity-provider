@@ -13,15 +13,14 @@
         <div class="form-wrapper">
             <div class="form-container"> 
                 <div style="text-align:center">
-                    <p>[App Name] requests access to the following permissions:</p>    
+                    <p>{{index .FormFields "Client Name"}} requests access to the following permissions:</p>    
                 </div> 
                 <form method="POST">
-                    <input type="checkbox" id="scope1" name="scope1" value="scope">
-                    <label for="scope1"> scope</label><br>
-                    <input type="checkbox" id="scope2" name="scope2" value="scope">
-                    <label for="scope2"> scope</label><br>
-                    <input type="checkbox" id="scope3" name="scope3" value="scope">
-                    <label for="scope3"> scope</label><br><br>
+                    {{range $scope, $value := .QueryParameters}}
+                    <input type="checkbox" id="scope{{$scope}}" name="scope{{$scope}}" value="{{$value}}">
+                    <label for="scope{{$scope}}"> {{$scope}}</label><br>
+                    {{end}}
+                    <br>
                     <div class="button-container">
                         <input type="button" value="Deny" class="btn btn-deny" onclick="handleDeny()">
                         <input type="submit" value="Allow" class="btn btn-allow">

@@ -81,6 +81,16 @@ func NewClientService(cr ClientRepository) *ClientService {
 
 type ClientRepository interface {
 	Create(req CreateClientRequest, credentials ClientCredentials) (*Client, error)
+	GetClientByID(id string) (Client, error)
+}
+
+func (s *ClientService) GetClientByID(id string) (Client, error) {
+	client, err := s.repository.GetClientByID(id)
+	if err != nil {
+		return Client{}, err
+	}
+
+	return client, nil
 }
 
 func (s *ClientService) generateRandomBytes(length int) (string, error) {
