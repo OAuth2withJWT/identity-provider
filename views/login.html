@@ -20,7 +20,6 @@
                     </div>
                 {{ end }}
                 <form action="/login" method="post">
-                    <input type="hidden" name="redirecturl" value="{{ .RedirectURL }}">
                     <label for="email">Email:</label>
                     <input type="text" id="email" name="email" value="{{ .Email }}" autofocus required>
                     <label for="password">Password:</label>

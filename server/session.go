@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
@@ -34,8 +33,8 @@ func (s *Server) protected(next http.Handler) http.Handler {
 
 		if !ok {
 			originURL := r.URL.RequestURI()
-			loginURL := "/login?redirect=" + url.QueryEscape(originURL)
-			http.Redirect(w, r, loginURL, http.StatusFound)
+			setRedirectCookie(w, originURL)
+			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 
@@ -54,7 +53,18 @@ func setSessionCookie(w http.ResponseWriter, sessionID string) {
 	})
 }
 
-func deleteCookie(w http.ResponseWriter) {
+func setRedirectCookie(w http.ResponseWriter, redirectURL string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "redirect",
+		Value:    redirectURL,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
+	})
+}
+
+func deleteSessionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_id",
 		Value:    "",
@@ -62,6 +72,18 @@ func deleteCookie(w http.ResponseWriter) {
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteStrictMode,
+	})
+}
+
+func deleteRedirectCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "redirect",
+		Value:    "",
+		Expires:  time.Now().AddDate(0, 0, -1),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Path:     "/",
 	})
 }
 
