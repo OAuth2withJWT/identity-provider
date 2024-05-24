@@ -14,13 +14,28 @@ func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	originURL := r.URL.Query().Get("redirect")
+	if originURL == "" {
+		originURL = "/"
+	}
+
 	tmpl, err := template.ParseFiles("views/login.html")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = tmpl.Execute(w, nil)
+	data := struct {
+		RedirectURL  string
+		ErrorMessage string
+		Email        string
+		Password     string
+	}{
+		RedirectURL: originURL,
+	}
+
+	err = tmpl.Execute(w, data)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -31,6 +46,7 @@ func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
+	redirectURL := r.FormValue("redirecturl")
 
 	user, err := s.app.UserService.ValidateUserCredentials(email, password)
 
@@ -39,7 +55,8 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 			Email        string
 			Password     string
 			ErrorMessage string
-		}{Email: email, Password: password, ErrorMessage: err.Error()}
+			RedirectURL  string
+		}{Email: email, Password: password, ErrorMessage: err.Error(), RedirectURL: redirectURL}
 
 		tmpl, err := template.ParseFiles("views/login.html")
 		if err != nil {
@@ -62,7 +79,8 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 			Email        string
 			Password     string
 			ErrorMessage string
-		}{Email: email, Password: password, ErrorMessage: err.Error()}
+			RedirectURL  string
+		}{Email: email, Password: password, ErrorMessage: err.Error(), RedirectURL: redirectURL}
 
 		tmpl, err := template.ParseFiles("views/login.html")
 		if err != nil {
@@ -84,7 +102,9 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setSessionCookie(w, sessionID)
-	http.Redirect(w, r, "/", http.StatusFound)
+
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+
 }
 
 func (s *Server) handleLogoutForm(w http.ResponseWriter, r *http.Request) {

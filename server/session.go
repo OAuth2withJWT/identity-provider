@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
@@ -32,7 +33,9 @@ func (s *Server) protected(next http.Handler) http.Handler {
 		_, ok := r.Context().Value(userContextKey).(app.User)
 
 		if !ok {
-			http.Redirect(w, r, "/login", http.StatusFound)
+			originURL := r.URL.RequestURI()
+			loginURL := "/login?redirect=" + url.QueryEscape(originURL)
+			http.Redirect(w, r, loginURL, http.StatusFound)
 			return
 		}
 
