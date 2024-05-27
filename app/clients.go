@@ -11,6 +11,17 @@ type ClientService struct {
 	repository ClientRepository
 }
 
+func NewClientService(cr ClientRepository) *ClientService {
+	return &ClientService{
+		repository: cr,
+	}
+}
+
+type ClientRepository interface {
+	Create(req CreateClientRequest, credentials ClientCredentials) (*Client, error)
+	GetClientByID(id string) (Client, error)
+}
+
 type Client struct {
 	Id          string
 	Name        string
@@ -39,6 +50,15 @@ func (req *CreateClientRequest) validate() error {
 	v.IsEmpty("Redirect URI", req.RedirectURI)
 	v.IsValidURI("Redirect URI", req.RedirectURI)
 	return v.Validate()
+}
+
+func GenerateRandomBytes(length int) (string, error) {
+	randomBytes := make([]byte, length)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(randomBytes), nil
 }
 
 func (s *ClientService) Create(req CreateClientRequest) (*Client, error) {
@@ -73,17 +93,6 @@ func (s *ClientService) Create(req CreateClientRequest) (*Client, error) {
 	return newClient, nil
 }
 
-func NewClientService(cr ClientRepository) *ClientService {
-	return &ClientService{
-		repository: cr,
-	}
-}
-
-type ClientRepository interface {
-	Create(req CreateClientRequest, credentials ClientCredentials) (*Client, error)
-	GetClientByID(id string) (Client, error)
-}
-
 func (s *ClientService) GetClientByID(id string) (Client, error) {
 	client, err := s.repository.GetClientByID(id)
 	if err != nil {
@@ -91,13 +100,4 @@ func (s *ClientService) GetClientByID(id string) (Client, error) {
 	}
 
 	return client, nil
-}
-
-func GenerateRandomBytes(length int) (string, error) {
-	randomBytes := make([]byte, length)
-	_, err := rand.Read(randomBytes)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(randomBytes), nil
 }
