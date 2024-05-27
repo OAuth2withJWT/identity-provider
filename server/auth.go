@@ -70,6 +70,11 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 	delete(authSessionStore, authSessionID)
 	deleteAuthSessionCookie(w)
 
+	if len(scopes) == 0 {
+		http.Redirect(w, r, redirectURI+"?error=access_denied&state="+state, http.StatusFound)
+		return
+	}
+
 	authorizationCode, err := generateAuthorizationCode()
 	if err != nil {
 		http.Error(w, "Unable to generate authorization code", http.StatusInternalServerError)
