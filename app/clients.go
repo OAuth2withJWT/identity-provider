@@ -50,14 +50,14 @@ func (s *ClientService) Create(req CreateClientRequest) (*Client, error) {
 
 	const clientIdLength = 16
 
-	clientID, err := s.generateRandomBytes(clientIdLength)
+	clientID, err := GenerateRandomBytes(clientIdLength)
 	if err != nil {
 		return nil, err
 	}
 
 	const clientSecretLength = 32
 
-	clientSecret, err := s.generateRandomBytes(clientSecretLength)
+	clientSecret, err := GenerateRandomBytes(clientSecretLength)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func (s *ClientService) GetClientByID(id string) (Client, error) {
 	return client, nil
 }
 
-func (s *ClientService) generateRandomBytes(length int) (string, error) {
+func GenerateRandomBytes(length int) (string, error) {
 	randomBytes := make([]byte, length)
 	_, err := rand.Read(randomBytes)
 	if err != nil {

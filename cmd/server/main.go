@@ -5,6 +5,7 @@ import (
 
 	"github.com/OAuth2withJWT/identity-provider/app"
 	"github.com/OAuth2withJWT/identity-provider/app/postgres"
+	"github.com/OAuth2withJWT/identity-provider/app/redis"
 	"github.com/OAuth2withJWT/identity-provider/db"
 	"github.com/OAuth2withJWT/identity-provider/server"
 )
@@ -20,12 +21,14 @@ func main() {
 	sessionRepository := postgres.NewSessionRepository(db)
 	verificationRepository := postgres.NewVerificationRepository(db)
 	clientRepository := postgres.NewClientRepository(db)
+	redisClient := redis.CreateRedisClient()
 
 	app := app.Application{
 		UserService:         app.NewUserService(userRepository),
 		SessionService:      app.NewSessionService(sessionRepository),
 		VerificationService: app.NewVerificationService(verificationRepository),
 		ClientService:       app.NewClientService(clientRepository),
+		RedisClient:         redisClient,
 	}
 	s := server.New(&app)
 

@@ -2,6 +2,9 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
+	"errors"
 	"net/http"
 	"time"
 
@@ -11,6 +14,24 @@ import (
 type contextKey string
 
 const userContextKey contextKey = "user"
+
+func generateSessionID() (string, error) {
+	randomBytes := make([]byte, 32)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(randomBytes), nil
+}
+
+type AuthSessionData struct {
+	ClientID    string
+	RedirectURI string
+	State       string
+	Expiration  time.Time
+}
+
+var authSessionStore = make(map[string]AuthSessionData)
 
 func (s *Server) withUser(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -46,56 +67,32 @@ func (s *Server) protected(next http.Handler) http.Handler {
 	}))
 }
 
-func setSessionCookie(w http.ResponseWriter, sessionID string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    sessionID,
-		Expires:  time.Now().Add(app.SessionDurationInHours * time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
+func setAuthSession(w http.ResponseWriter, clientID string, redirectURI string, state string) {
+	sessionID, err := generateSessionID()
 
-func setRedirectCookie(w http.ResponseWriter, redirectURL string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "redirect",
-		Value:    redirectURL,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-	})
-}
-
-func deleteSessionCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    "",
-		Expires:  time.Now().AddDate(0, 0, -1),
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
-
-func deleteRedirectCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "redirect",
-		Value:    "",
-		Expires:  time.Now().AddDate(0, 0, -1),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-		Path:     "/",
-	})
-}
-
-func getSessionIDFromCookie(r *http.Request) string {
-	cookie, err := r.Cookie("session_id")
 	if err != nil {
-		return ""
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
-	sessionID := cookie.Value
-	return sessionID
+
+	authSessionData := AuthSessionData{
+		ClientID:    clientID,
+		RedirectURI: redirectURI,
+		State:       state,
+	}
+
+	authSessionStore[sessionID] = authSessionData
+
+	setAuthCookie(w, sessionID)
+}
+
+func getAuthSessionFromStore(authSessionID string) (AuthSessionData, error) {
+	session, ok := authSessionStore[authSessionID]
+	if !ok {
+		return AuthSessionData{}, errors.New("session not found")
+	}
+	if time.Now().After(session.Expiration) {
+		delete(authSessionStore, authSessionID)
+	}
+	return session, nil
 }
