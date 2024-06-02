@@ -1,7 +1,9 @@
 package server
 
 import (
+	"encoding/json"
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -65,7 +67,7 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 
 	redirectURI := authSessionData.RedirectURI
 	state := authSessionData.State
-	clientID := authSessionData.State
+	clientID := authSessionData.ClientID
 
 	delete(authSessionStore, authSessionID)
 	deleteAuthSessionCookie(w)
@@ -82,6 +84,7 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	codeInfo := &AuthorizationCodeInfo{
+		Value:       authorizationCode,
 		ClientID:    clientID,
 		RedirectURI: redirectURI,
 		State:       state,
@@ -89,7 +92,45 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 		Expiration:  time.Now().Add(time.Minute * authorizationCodeExpirationTime).Unix(),
 	}
 
-	storeAuthorizationCode(s, codeInfo)
+	s.storeAuthorizationCode(codeInfo)
 
 	http.Redirect(w, r, redirectURI+"?code="+authorizationCode+"&state="+state, http.StatusFound)
+}
+
+func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
+	var req TokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Print("Invalid request")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if req.GrantType != "authorization_code" {
+		log.Print("Unsupported grant type")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	scopes, err := s.validateAuthorizationCode(req.Code, req.ClientID, req.RedirectURI)
+	if err != nil {
+		log.Print("Invalid authorization code")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	token, err := createToken(req.ClientID, req.ClientSecret, scopes)
+	if err != nil {
+		log.Print("Error generating token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]string{
+		"access_token": token,
+		"token_type":   "Bearer",
+		"expires_in":   "2592000",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
