@@ -125,10 +125,73 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]string{
-		"access_token": token,
-		"token_type":   "Bearer",
-		"expires_in":   "2592000",
+	response := TokenResponse{
+		AccessToken: token,
+		TokenType:   "Bearer",
+		ExpiresIn:   (time.Hour * time.Duration(tokenExpirationTime)).String(),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (s *Server) handleTokenVerification(w http.ResponseWriter, r *http.Request) {
+	var req VerificationRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		response := VerificationErrorResponse{
+			Error:            "invalid_request",
+			ErrorDescription: "Request body is not as expected",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	clientID, err := extractClientID(req.Token)
+	if err != nil {
+		response := VerificationErrorResponse{
+			Error:            "invalid_client",
+			ErrorDescription: "The client authentication was invalid",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	client, err := s.app.ClientService.GetClientByID(clientID)
+	if err != nil {
+		response := VerificationErrorResponse{
+			Error:            "invalid_client",
+			ErrorDescription: "The client authentication was invalid",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	scopes, err := s.verifyToken(req.Token, client)
+	if err != nil {
+		response := VerificationResponse{
+			Active: "false",
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	scopesStr := []string{}
+	for _, s := range scopes {
+		if scope, ok := s.(string); ok {
+			scopesStr = append(scopesStr, scope)
+		}
+	}
+
+	response := VerificationResponse{
+		Active: "true",
+		Scope:  scopesStr,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
