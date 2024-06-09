@@ -93,7 +93,7 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 		RedirectURI:         redirectURI,
 		State:               state,
 		Scopes:              scopes,
-		Expiration:          time.Now().Add(time.Minute * authorizationCodeExpirationTime).Unix(),
+		Expiration:          time.Now().Add(authorizationCodeExpiration).Unix(),
 		CodeChallenge:       codeChallenge,
 		CodeChallengeMethod: codeChallengeMethod,
 	}
@@ -143,6 +143,8 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	s.deleteAuthorizationCode()
 
 	response := TokenResponse{
 		AccessToken: token,

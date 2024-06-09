@@ -9,8 +9,10 @@ import (
 	"github.com/OAuth2withJWT/identity-provider/app"
 )
 
-const authorizationCodeLength = 12
-const authorizationCodeExpirationTime = 10
+const (
+	authorizationCodeLength     = 12
+	authorizationCodeExpiration = 10 * time.Minute
+)
 
 type AuthorizationCodeInfo struct {
 	Value               string
@@ -38,11 +40,20 @@ func (s *Server) storeAuthorizationCode(codeInfo *AuthorizationCodeInfo) error {
 		return err
 	}
 
-	err = s.app.RedisService.Set(ctx, "authorizationCode", string(codeInfoJSON), authorizationCodeExpirationTime*time.Minute)
+	err = s.app.RedisService.Set(ctx, "authorizationCode", string(codeInfoJSON), authorizationCodeExpiration)
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (s *Server) deleteAuthorizationCode() error {
+	ctx := context.Background()
+	err := s.app.RedisService.Delete(ctx, "authorizationCode")
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
