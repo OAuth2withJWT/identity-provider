@@ -13,12 +13,14 @@ const authorizationCodeLength = 12
 const authorizationCodeExpirationTime = 10
 
 type AuthorizationCodeInfo struct {
-	Value       string
-	ClientID    string
-	RedirectURI string
-	State       string
-	Scopes      []string
-	Expiration  int64
+	Value               string
+	ClientID            string
+	RedirectURI         string
+	State               string
+	Scopes              []string
+	Expiration          int64
+	CodeChallenge       string
+	CodeChallengeMethod string
 }
 
 func generateAuthorizationCode() (string, error) {

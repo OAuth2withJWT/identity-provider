@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
 )
@@ -25,10 +24,11 @@ func generateSessionID() (string, error) {
 }
 
 type AuthSessionData struct {
-	ClientID    string
-	RedirectURI string
-	State       string
-	Expiration  time.Time
+	ClientID            string
+	RedirectURI         string
+	State               string
+	CodeChallenge       string
+	CodeChallengeMethod string
 }
 
 var authSessionStore = make(map[string]AuthSessionData)
@@ -67,7 +67,7 @@ func (s *Server) protected(next http.Handler) http.Handler {
 	}))
 }
 
-func setAuthSession(w http.ResponseWriter, clientID string, redirectURI string, state string) {
+func setAuthSession(w http.ResponseWriter, clientID string, redirectURI string, state string, codeChallenge string, codeChallengeMethod string) {
 	sessionID, err := generateSessionID()
 
 	if err != nil {
@@ -76,9 +76,11 @@ func setAuthSession(w http.ResponseWriter, clientID string, redirectURI string, 
 	}
 
 	authSessionData := AuthSessionData{
-		ClientID:    clientID,
-		RedirectURI: redirectURI,
-		State:       state,
+		ClientID:            clientID,
+		RedirectURI:         redirectURI,
+		State:               state,
+		CodeChallenge:       codeChallenge,
+		CodeChallengeMethod: codeChallengeMethod,
 	}
 
 	authSessionStore[sessionID] = authSessionData
@@ -90,9 +92,6 @@ func getAuthSessionFromStore(authSessionID string) (AuthSessionData, error) {
 	session, ok := authSessionStore[authSessionID]
 	if !ok {
 		return AuthSessionData{}, errors.New("session not found")
-	}
-	if time.Now().After(session.Expiration) {
-		delete(authSessionStore, authSessionID)
 	}
 	return session, nil
 }

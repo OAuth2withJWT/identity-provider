@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/golang-jwt/jwt"
 )
 
 const tokenExpirationTime = 30 * 24
@@ -18,6 +18,7 @@ type TokenRequest struct {
 	ClientID     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
 	RedirectURI  string `json:"redirect_uri"`
+	CodeVerifier string `json:"code_verifier"`
 }
 
 type TokenResponse struct {
