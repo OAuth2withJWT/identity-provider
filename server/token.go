@@ -109,14 +109,14 @@ func (s *Server) validateClaims(claims jwt.MapClaims, client app.Client) ([]inte
 	scope := claims["scope"].([]interface{})
 
 	requiredScopes := strings.Split(client.Scope, ",")
-	if !containsAllScopes(scope, requiredScopes) {
+	if !containsAnyScope(scope, requiredScopes) {
 		return nil, fmt.Errorf("invalid or missing scopes")
 	}
 
 	return scope, nil
 }
 
-func containsAllScopes(tokenScopes []interface{}, requiredScopes []string) bool {
+func containsAnyScope(tokenScopes []interface{}, requiredScopes []string) bool {
 	scopeSet := make(map[string]struct{})
 	for _, s := range tokenScopes {
 		if scopeStr, ok := s.(string); ok {
@@ -125,12 +125,12 @@ func containsAllScopes(tokenScopes []interface{}, requiredScopes []string) bool 
 	}
 
 	for _, reqScope := range requiredScopes {
-		if _, found := scopeSet[reqScope]; !found {
-			return false
+		if _, found := scopeSet[reqScope]; found {
+			return true
 		}
 	}
 
-	return true
+	return false
 }
 
 func extractClientID(tokenString string) (string, error) {
