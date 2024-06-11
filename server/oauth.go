@@ -81,10 +81,19 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	scopes := r.Form["scopes"]
-
 	authID := getAuthIDFromCookie(r)
+
 	authData, err := s.app.AuthService.Get(authID)
-	s.app.AuthService.Delete(authID)
+	if err != nil {
+		http.Error(w, "Unable to retrieve auth data", http.StatusInternalServerError)
+		return
+	}
+
+	err = s.app.AuthService.Delete(authID)
+	if err != nil {
+		http.Error(w, "Unable to delete auth data", http.StatusInternalServerError)
+		return
+	}
 
 	redirectURI := authData.RedirectURI
 	state := authData.State
@@ -160,7 +169,11 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.app.AuthorizationCodeService.Delete(req.Code)
+	err = s.app.AuthorizationCodeService.Delete(req.Code)
+	if err != nil {
+		http.Error(w, "Unable to delete authorization code data", http.StatusInternalServerError)
+		return
+	}
 
 	response := TokenResponse{
 		AccessToken: token,
