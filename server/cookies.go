@@ -18,17 +18,6 @@ func setSessionCookie(w http.ResponseWriter, sessionID string) {
 	})
 }
 
-func setAuthSessionCookie(w http.ResponseWriter, authSessionID string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_session_id",
-		Value:    authSessionID,
-		Expires:  time.Now().Add(authorizationCodeExpiration),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
-
 func setRedirectCookie(w http.ResponseWriter, redirectURL string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "redirect",
@@ -63,17 +52,6 @@ func deleteRedirectCookie(w http.ResponseWriter) {
 	})
 }
 
-func deleteAuthSessionCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_session_id",
-		Value:    "",
-		Expires:  time.Now().AddDate(0, 0, -1),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
-
 func getSessionIDFromCookie(r *http.Request) string {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
@@ -83,8 +61,30 @@ func getSessionIDFromCookie(r *http.Request) string {
 	return sessionID
 }
 
-func getAuthSessionIDFromCookie(r *http.Request) string {
-	cookie, err := r.Cookie("auth_session_id")
+func setAuthCookie(w http.ResponseWriter, authID string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_id",
+		Value:    authID,
+		Expires:  time.Now().Add(app.AuthExpiration),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+}
+
+func deleteAuthCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_id",
+		Value:    "",
+		Expires:  time.Now().AddDate(0, 0, -1),
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	})
+}
+
+func getAuthIDFromCookie(r *http.Request) string {
+	cookie, err := r.Cookie("auth_id")
 	if err != nil {
 		return ""
 	}

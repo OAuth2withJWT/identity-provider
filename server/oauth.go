@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/OAuth2withJWT/identity-provider/app"
 )
 
 func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +35,22 @@ func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setAuthSession(w, clientID, redirectURI, state, codeChallenge, codeChallengeMethod)
+	authID, err := app.GenerateAuthID()
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	setAuthCookie(w, authID)
+
+	s.app.AuthService.Create(app.Auth{
+		AuthID:              authID,
+		ClientID:            clientID,
+		RedirectURI:         redirectURI,
+		State:               state,
+		CodeChallenge:       codeChallenge,
+		CodeChallengeMethod: codeChallengeMethod,
+	})
 
 	scopes := strings.Split(client.Scope, ",")
 	data := struct {
@@ -65,45 +82,39 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 
 	scopes := r.Form["scopes"]
 
-	authSessionID := getAuthSessionIDFromCookie(r)
-	authSessionData, err := getAuthSessionFromStore(authSessionID)
-	if err != nil {
-		http.Error(w, "Unable to retrieve authentication session", http.StatusInternalServerError)
-		return
-	}
+	authID := getAuthIDFromCookie(r)
+	authData, err := s.app.AuthService.Get(authID)
+	s.app.AuthService.Delete(authID)
 
-	redirectURI := authSessionData.RedirectURI
-	state := authSessionData.State
-	clientID := authSessionData.ClientID
-	codeChallenge := authSessionData.CodeChallenge
-	codeChallengeMethod := authSessionData.CodeChallengeMethod
+	redirectURI := authData.RedirectURI
+	state := authData.State
+	clientID := authData.ClientID
+	codeChallenge := authData.CodeChallenge
+	codeChallengeMethod := authData.CodeChallengeMethod
 
-	delete(authSessionStore, authSessionID)
-	deleteAuthSessionCookie(w)
+	deleteAuthCookie(w)
 
 	if len(scopes) == 0 {
 		http.Redirect(w, r, redirectURI+"?error=access_denied&state="+state, http.StatusFound)
 		return
 	}
 
-	authorizationCode, err := generateAuthorizationCode()
+	authorizationCode, err := app.GenerateAuthorizationCode()
 	if err != nil {
 		http.Error(w, "Unable to generate authorization code", http.StatusInternalServerError)
 		return
 	}
 
-	codeInfo := &AuthorizationCodeInfo{
+	s.app.AuthorizationCodeService.Create(app.AuthorizationCode{
 		Value:               authorizationCode,
 		ClientID:            clientID,
 		RedirectURI:         redirectURI,
 		State:               state,
 		Scopes:              scopes,
-		Expiration:          time.Now().Add(authorizationCodeExpiration).Unix(),
+		Expiration:          time.Now().Add(app.AuthorizationCodeExpiration).Unix(),
 		CodeChallenge:       codeChallenge,
 		CodeChallengeMethod: codeChallengeMethod,
-	}
-
-	s.storeAuthorizationCode(codeInfo)
+	})
 
 	http.Redirect(w, r, redirectURI+"?code="+authorizationCode+"&state="+state, http.StatusFound)
 }
@@ -122,7 +133,7 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valid, err := s.validateCodeChallenge(req.CodeVerifier)
+	valid, err := s.validateCodeChallenge(req.CodeVerifier, req.Code)
 	if err != nil {
 		log.Printf("Error validating code challenge: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -149,7 +160,7 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.deleteAuthorizationCode()
+	s.app.AuthorizationCodeService.Delete(req.Code)
 
 	response := TokenResponse{
 		AccessToken: token,

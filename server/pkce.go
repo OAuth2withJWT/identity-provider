@@ -1,26 +1,17 @@
 package server
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
+	"fmt"
 )
 
-func (s *Server) validateCodeChallenge(verifier string) (bool, error) {
-	ctx := context.Background()
-	res, err := s.app.RedisService.Get(ctx, "authorizationCode")
+func (s *Server) validateCodeChallenge(verifier string, authorizationCode string) (bool, error) {
+	authorizationCodeData, err := s.app.AuthorizationCodeService.Get(authorizationCode)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("error retrieving authorization code data: %v", err)
 	}
-
-	var codeInfo AuthorizationCodeInfo
-	err = json.Unmarshal([]byte(res), &codeInfo)
-	if err != nil {
-		return false, err
-	}
-
 	sha256Bytes := sha256.Sum256([]byte(verifier))
 	computedChallenge := base64.RawURLEncoding.EncodeToString(sha256Bytes[:])
-	return computedChallenge == codeInfo.CodeChallenge, nil
+	return computedChallenge == authorizationCodeData.CodeChallenge, nil
 }

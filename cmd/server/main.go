@@ -23,14 +23,16 @@ func main() {
 	sessionRepository := postgres.NewSessionRepository(dbConn)
 	verificationRepository := postgres.NewVerificationRepository(dbConn)
 	clientRepository := postgres.NewClientRepository(dbConn)
-	redisRepository := redis.NewRedisRepository(redisClient)
+	authRepository := redis.NewAuthRepository(redisClient)
+	authizationCodeRepository := redis.NewAuthorizationCodeRepository(redisClient)
 
 	app := app.Application{
-		UserService:         app.NewUserService(userRepository),
-		SessionService:      app.NewSessionService(sessionRepository),
-		VerificationService: app.NewVerificationService(verificationRepository),
-		ClientService:       app.NewClientService(clientRepository),
-		RedisService:        app.NewRedisService(redisRepository),
+		UserService:              app.NewUserService(userRepository),
+		SessionService:           app.NewSessionService(sessionRepository),
+		VerificationService:      app.NewVerificationService(verificationRepository),
+		ClientService:            app.NewClientService(clientRepository),
+		AuthService:              app.NewAuthService(authRepository),
+		AuthorizationCodeService: app.NewAuthorizationCodeService(authizationCodeRepository),
 	}
 	s := server.New(&app)
 
