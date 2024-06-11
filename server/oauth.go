@@ -22,6 +22,11 @@ func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if codeChallengeMethod != "S256" {
+		http.Error(w, "Invalid code challenge method", http.StatusBadRequest)
+		return
+	}
+
 	client, err := s.app.ClientService.GetClientByID(clientID)
 	if err != nil {
 		http.Error(w, "Unauthorized client", http.StatusUnauthorized)

@@ -85,7 +85,7 @@ func setAuthSession(w http.ResponseWriter, clientID string, redirectURI string, 
 
 	authSessionStore[sessionID] = authSessionData
 
-	setAuthCookie(w, sessionID)
+	setAuthSessionCookie(w, sessionID)
 }
 
 func getAuthSessionFromStore(authSessionID string) (AuthSessionData, error) {

@@ -18,11 +18,11 @@ func setSessionCookie(w http.ResponseWriter, sessionID string) {
 	})
 }
 
-func setAuthCookie(w http.ResponseWriter, authSessionID string) {
+func setAuthSessionCookie(w http.ResponseWriter, authSessionID string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_session_id",
 		Value:    authSessionID,
-		Expires:  time.Now().Add(app.SessionDurationInHours * time.Hour),
+		Expires:  time.Now().Add(authorizationCodeExpiration),
 		Secure:   true,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
