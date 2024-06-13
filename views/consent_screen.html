@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lag="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consent Screen</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/public/css/consent_screen.css">
+</head>
+<body>
+    <div class="container">
+        <div class="form-wrapper">
+            <div class="form-container"> 
+                <div style="text-align:center">
+                    <p>{{ .ClientName }} requests access to the following permissions:</p>    
+                </div> 
+                <form id="consent-form" method="POST">
+                    {{ range .Scopes }}
+                    <input type="checkbox" id="scope{{ . }}" name="scopes" value="{{ . }}">
+                    <label for="scope{{ . }}"> {{ . }}</label><br>
+                    {{ end }}
+                    <div class="button-container">
+                        <input type="button" value="Deny" class="btn btn-deny" id="deny-button">
+                        <input type="submit" value="Allow" class="btn btn-allow">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="/public/js/consent_screen.js"></script>
+</body>
+</html>

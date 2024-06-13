@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
 )
@@ -18,7 +17,11 @@ func (s *Server) withUser(next http.HandlerFunc) http.Handler {
 		session, err := s.app.SessionService.ValidateSession(sessionID)
 
 		if err == nil {
-			user, _ := s.app.UserService.GetUserByID(session.UserId)
+			user, nil := s.app.UserService.GetUserByID(session.UserId)
+			if err != nil {
+				http.Error(w, "unauthorized_user", http.StatusUnauthorized)
+				return
+			}
 			ctx := context.WithValue(r.Context(), userContextKey, user)
 			r = r.WithContext(ctx)
 		}
@@ -32,41 +35,12 @@ func (s *Server) protected(next http.Handler) http.Handler {
 		_, ok := r.Context().Value(userContextKey).(app.User)
 
 		if !ok {
+			originURL := r.URL.RequestURI()
+			setRedirectCookie(w, originURL)
 			http.Redirect(w, r, "/login", http.StatusFound)
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	}))
-}
-
-func setSessionCookie(w http.ResponseWriter, sessionID string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    sessionID,
-		Expires:  time.Now().Add(app.SessionDurationInHours * time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
-
-func deleteCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_id",
-		Value:    "",
-		Expires:  time.Now().AddDate(0, 0, -1),
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-	})
-}
-
-func getSessionIDFromCookie(r *http.Request) string {
-	cookie, err := r.Cookie("session_id")
-	if err != nil {
-		return ""
-	}
-	sessionID := cookie.Value
-	return sessionID
 }

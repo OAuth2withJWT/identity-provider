@@ -19,7 +19,7 @@ Before starting the Air server, ensure the Go binary directory is added to your 
 
 ### Database migrations
 
-We use 'golang-migrate/migrate' for managing database migrations. To create and apply migrations, follow these steps:
+We use ```golang-migrate/migrate``` for managing database migrations. To create and apply migrations, follow these steps:
 
 1. **Install migrate CLI:** Install the `migrate` command-line tool by following the instructions provided in the [official repository](https://github.com/golang-migrate/migrate/tree/master).
 
@@ -27,13 +27,24 @@ We use 'golang-migrate/migrate' for managing database migrations. To create and 
     
     ```make create_migration NAME=<migration_name>```
 
-2.  **Apply Migrations:** To apply pending migrations and update the database schema, run:
+3.  **Apply Migrations:** To apply pending migrations and update the database schema, run:
     
     ```make migration_up [N=<number_of_migrations_to_apply>]```
 
     
-2.  **Rollback Migrations:** To rollback the applied migrations, run:
+4.  **Rollback Migrations:** To rollback the applied migrations, run:
     
     ```make migration_down [N=<number_of_migrations_to_rollback>]```
     
-   
+
+### Using Redis with go-redis/v9
+
+We use ```go-redis/v9``` as our in-memory database solution. To integrate it into your project, follow these steps:
+
+1. **Install Redis**
+
+    ```go get github.com/redis/go-redis/v9```
+
+2. **Start Redis server**: To start the Redis server, simply run the following command in your terminal:
+
+    ```redis-server```

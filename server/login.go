@@ -21,6 +21,7 @@ func (s *Server) handleLoginPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = tmpl.Execute(w, nil)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -84,7 +85,17 @@ func (s *Server) handleLoginForm(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setSessionCookie(w, sessionID)
-	http.Redirect(w, r, "/", http.StatusFound)
+
+	cookie, err := r.Cookie("redirect")
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
+	redirectURL := cookie.Value
+	deleteRedirectCookie(w)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+
 }
 
 func (s *Server) handleLogoutForm(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +107,7 @@ func (s *Server) handleLogoutForm(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		deleteCookie(w)
+		deleteSessionCookie(w)
 	}
 	http.Redirect(w, r, "/", http.StatusFound)
 }

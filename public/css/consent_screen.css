@@ -1,0 +1,59 @@
+body {
+    font-family: 'Montserrat', sans-serif; 
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    max-width: none;
+    padding: 40px;
+}
+
+.form-container {
+    width: 300px; 
+    padding: 5px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
+    margin: 50px auto;
+    display: flex;
+    flex-direction: column; 
+    padding: 30px;
+}
+
+p {
+    font-weight:500;
+    font-size:16px;
+}
+
+.button-container {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.btn { 
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.btn-allow:hover{
+    background-color: #0056b3;
+}
+
+.btn-deny:hover{
+    color: rgb(194, 10, 10);
+}
+
+.btn-allow {
+    color: #fff;
+    background-color: #007bff;
+}
+
+.btn-deny {
+    background-color: #fff;
+    color: red;
+}

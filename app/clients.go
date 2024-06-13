@@ -11,6 +11,17 @@ type ClientService struct {
 	repository ClientRepository
 }
 
+func NewClientService(cr ClientRepository) *ClientService {
+	return &ClientService{
+		repository: cr,
+	}
+}
+
+type ClientRepository interface {
+	Create(req CreateClientRequest, credentials ClientCredentials) (*Client, error)
+	GetClientByID(id string) (Client, error)
+}
+
 type Client struct {
 	Id          string
 	Name        string
@@ -41,6 +52,15 @@ func (req *CreateClientRequest) validate() error {
 	return v.Validate()
 }
 
+func GenerateRandomBytes(length int) (string, error) {
+	randomBytes := make([]byte, length)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(randomBytes), nil
+}
+
 func (s *ClientService) Create(req CreateClientRequest) (*Client, error) {
 
 	err := req.validate()
@@ -50,14 +70,14 @@ func (s *ClientService) Create(req CreateClientRequest) (*Client, error) {
 
 	const clientIdLength = 16
 
-	clientID, err := s.generateRandomBytes(clientIdLength)
+	clientID, err := GenerateRandomBytes(clientIdLength)
 	if err != nil {
 		return nil, err
 	}
 
 	const clientSecretLength = 32
 
-	clientSecret, err := s.generateRandomBytes(clientSecretLength)
+	clientSecret, err := GenerateRandomBytes(clientSecretLength)
 	if err != nil {
 		return nil, err
 	}
@@ -73,21 +93,11 @@ func (s *ClientService) Create(req CreateClientRequest) (*Client, error) {
 	return newClient, nil
 }
 
-func NewClientService(cr ClientRepository) *ClientService {
-	return &ClientService{
-		repository: cr,
-	}
-}
-
-type ClientRepository interface {
-	Create(req CreateClientRequest, credentials ClientCredentials) (*Client, error)
-}
-
-func (s *ClientService) generateRandomBytes(length int) (string, error) {
-	randomBytes := make([]byte, length)
-	_, err := rand.Read(randomBytes)
+func (s *ClientService) GetClientByID(id string) (Client, error) {
+	client, err := s.repository.GetClientByID(id)
 	if err != nil {
-		return "", err
+		return Client{}, err
 	}
-	return hex.EncodeToString(randomBytes), nil
+
+	return client, nil
 }

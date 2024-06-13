@@ -43,4 +43,8 @@ func (s *Server) setupRoutes() {
 	s.router.HandleFunc("/account-message", s.handleMessage).Methods("GET")
 	s.router.Handle("/client-registration", s.protected(http.HandlerFunc(s.handleClientRegistrationPage))).Methods("GET")
 	s.router.Handle("/client-registration", s.protected(http.HandlerFunc(s.handleClientRegistrationForm))).Methods("POST")
+	s.router.Handle("/oauth2/auth", s.protected(http.HandlerFunc(s.handleAuthPage))).Methods("GET")
+	s.router.HandleFunc("/oauth2/auth", s.handleAuthForm).Methods("POST")
+	s.router.HandleFunc("/oauth2/token", s.handleTokenRequest).Methods("POST")
+	s.router.HandleFunc("/oauth2/token/verify", s.handleTokenVerification).Methods("POST")
 }
