@@ -3,3 +3,4 @@ build/
 migrate.linux-amd64.tar.gz
 tmp/
 dump.rdb
+keys/

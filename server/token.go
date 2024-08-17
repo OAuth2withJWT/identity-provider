@@ -1,7 +1,11 @@
 package server
 
 import (
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -11,6 +15,11 @@ import (
 
 const tokenExpirationTime = 30 * 24
 const resourceServer = "http://localhost:3000/api"
+
+var (
+	privateKey *rsa.PrivateKey
+	publicKey  *rsa.PublicKey
+)
 
 type TokenRequest struct {
 	GrantType    string `json:"grant_type"`
@@ -41,12 +50,46 @@ type VerificationResponse struct {
 	Scope  []string `json:"scope,omitempty"`
 }
 
-func createToken(clientID string, clientSecret string, scopes []string) (string, error) {
-	if clientID == "" || clientSecret == "" {
-		return "", fmt.Errorf("client id and client secret cannot be empty")
+func init() {
+	privKeyData, err := os.ReadFile("keys/private_key.pem")
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load private key: %v", err))
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	block, _ := pem.Decode(privKeyData)
+	if block == nil || block.Type != "PRIVATE KEY" {
+		panic("Failed to decode PEM block containing private key")
+	}
+
+	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse private key: %v", err))
+	}
+
+	pubKeyData, err := os.ReadFile("keys/public_key.pem")
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load public key: %v", err))
+	}
+
+	block, _ = pem.Decode(pubKeyData)
+	if block == nil || block.Type != "PUBLIC KEY" {
+		panic("Failed to decode PEM block containing public key")
+	}
+
+	pubKeyInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to parse public key: %v", err))
+	}
+
+	publicKey = pubKeyInterface.(*rsa.PublicKey)
+}
+
+func createToken(clientID string, scopes []string) (string, error) {
+	if clientID == "" {
+		return "", fmt.Errorf("client id cannot be empty")
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"aud":   resourceServer,
 		"exp":   time.Now().Add(time.Hour * tokenExpirationTime).Unix(),
 		"iss":   clientID,
@@ -54,7 +97,7 @@ func createToken(clientID string, clientSecret string, scopes []string) (string,
 		"scope": scopes,
 	})
 
-	tokenString, err := token.SignedString([]byte(clientSecret))
+	tokenString, err := token.SignedString(privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -64,10 +107,10 @@ func createToken(clientID string, clientSecret string, scopes []string) (string,
 
 func (s *Server) verifyToken(tokenString string, client app.Client) ([]interface{}, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(client.Secret), nil
+		return publicKey, nil
 	})
 
 	if err != nil {

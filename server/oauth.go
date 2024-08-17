@@ -162,7 +162,7 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := createToken(req.ClientID, req.ClientSecret, scopes)
+	token, err := createToken(req.ClientID, scopes)
 	if err != nil {
 		log.Print("Error generating token")
 		w.WriteHeader(http.StatusInternalServerError)
