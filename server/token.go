@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,12 +14,13 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-const tokenExpirationTime = 30 * 24
-const resourceServer = "http://localhost:3000/api"
+const tokenExpirationTime = 24
 
 var (
-	privateKey *rsa.PrivateKey
-	publicKey  *rsa.PublicKey
+	privateKey       any
+	publicKey        any
+	resourceServer   string
+	identityProvider string
 )
 
 type TokenRequest struct {
@@ -32,6 +34,7 @@ type TokenRequest struct {
 
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
+	IDToken     string `json:"id_token,omitempty"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   string `json:"expires_in"`
 }
@@ -50,6 +53,7 @@ type VerificationResponse struct {
 	Scope  []string `json:"scope,omitempty"`
 }
 
+// TODO: refactor to config function
 func init() {
 	privKeyData, err := os.ReadFile("keys/private_key.pem")
 	if err != nil {
@@ -61,7 +65,7 @@ func init() {
 		panic("Failed to decode PEM block containing private key")
 	}
 
-	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	privateKey, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to parse private key: %v", err))
 	}
@@ -82,9 +86,19 @@ func init() {
 	}
 
 	publicKey = pubKeyInterface.(*rsa.PublicKey)
+
+	resourceServer = os.Getenv("RESOURCE_SERVER")
+	if resourceServer == "" {
+		resourceServer = "http://localhost:3000/api"
+	}
+
+	identityProvider = os.Getenv("IDENTITY_PROVIDER")
+	if identityProvider == "" {
+		identityProvider = "http://localhost:8080"
+	}
 }
 
-func createToken(clientID string, scopes []string) (string, error) {
+func createAccessToken(clientID string, scopes []string, userID int) (string, error) {
 	if clientID == "" {
 		return "", fmt.Errorf("client id cannot be empty")
 	}
@@ -93,7 +107,7 @@ func createToken(clientID string, scopes []string) (string, error) {
 		"aud":   resourceServer,
 		"exp":   time.Now().Add(time.Hour * tokenExpirationTime).Unix(),
 		"iss":   clientID,
-		"sub":   clientID,
+		"sub":   strconv.Itoa(userID),
 		"scope": scopes,
 	})
 
@@ -105,7 +119,31 @@ func createToken(clientID string, scopes []string) (string, error) {
 	return tokenString, nil
 }
 
-func (s *Server) verifyToken(tokenString string, client app.Client) ([]interface{}, error) {
+func createIDToken(clientID string, user app.User, atHash string) (string, error) {
+	if clientID == "" {
+		return "", fmt.Errorf("client ID cannot be empty")
+	}
+
+	idToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"iss":     identityProvider,
+		"sub":     strconv.Itoa(user.UserId),
+		"aud":     clientID,
+		"exp":     time.Now().Add(time.Hour * tokenExpirationTime).Unix(),
+		"iat":     time.Now().Unix(),
+		"name":    user.FirstName,
+		"email":   user.Email,
+		"at_hash": atHash,
+	})
+
+	idTokenString, err := idToken.SignedString(privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	return idTokenString, nil
+}
+
+func (s *Server) validateAccessToken(tokenString string, client app.Client) ([]interface{}, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
