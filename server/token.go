@@ -214,6 +214,15 @@ func containsAnyScope(tokenScopes []interface{}, requiredScopes []string) bool {
 	return false
 }
 
+func ContainsScope(scopes []string, targetScope string) bool {
+	for _, scope := range scopes {
+		if scope == targetScope {
+			return true
+		}
+	}
+	return false
+}
+
 func extractClientID(tokenString string) (string, error) {
 	token, _, err := new(jwt.Parser).ParseUnverified(tokenString, jwt.MapClaims{})
 	if err != nil {

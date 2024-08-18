@@ -192,20 +192,21 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		ExpiresIn:   (time.Hour * time.Duration(tokenExpirationTime)).String(),
 	}
 
-	user, nil := s.app.UserService.GetUserByID(userId)
+	user, err := s.app.UserService.GetUserByID(userId)
 	if err != nil {
 		http.Error(w, "unauthorized_user", http.StatusUnauthorized)
 		return
 	}
 
-	idToken, err := createIDToken(req.ClientID, user, atHash)
-	if err != nil {
-		log.Print("Error generating token")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	if ContainsScope(scopes, "openid") {
+		idToken, err := createIDToken(req.ClientID, user, atHash)
+		if err != nil {
+			log.Print("Error generating ID token")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		response.IDToken = idToken
 	}
-
-	response.IDToken = idToken
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
