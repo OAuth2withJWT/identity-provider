@@ -166,7 +166,7 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := createAccessToken(req.ClientID, scopes, userId)
+	accessToken, err := s.createAccessToken(req.ClientID, scopes, userId)
 	if err != nil {
 		log.Print("Error generating token")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -189,7 +189,7 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 	response := TokenResponse{
 		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		ExpiresIn:   (time.Hour * time.Duration(tokenExpirationTime)).String(),
+		ExpiresIn:   (time.Duration(s.RSAConfig.TokenExpirationTime)).String(),
 	}
 
 	user, err := s.app.UserService.GetUserByID(userId)
@@ -199,7 +199,7 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if ContainsScope(scopes, "openid") {
-		idToken, err := createIDToken(req.ClientID, user, atHash)
+		idToken, err := s.createIDToken(req.ClientID, user, atHash)
 		if err != nil {
 			log.Print("Error generating ID token")
 			w.WriteHeader(http.StatusInternalServerError)

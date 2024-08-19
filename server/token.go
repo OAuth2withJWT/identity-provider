@@ -1,26 +1,13 @@
 package server
 
 import (
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
 	"github.com/golang-jwt/jwt"
-)
-
-const tokenExpirationTime = 24
-
-var (
-	privateKey       any
-	publicKey        any
-	resourceServer   string
-	identityProvider string
 )
 
 type TokenRequest struct {
@@ -53,65 +40,20 @@ type VerificationResponse struct {
 	Scope  []string `json:"scope,omitempty"`
 }
 
-// TODO: refactor to config function
-func init() {
-	privKeyData, err := os.ReadFile("keys/private_key.pem")
-	if err != nil {
-		panic(fmt.Sprintf("Failed to load private key: %v", err))
-	}
-
-	block, _ := pem.Decode(privKeyData)
-	if block == nil || block.Type != "PRIVATE KEY" {
-		panic("Failed to decode PEM block containing private key")
-	}
-
-	privateKey, err = x509.ParsePKCS8PrivateKey(block.Bytes)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to parse private key: %v", err))
-	}
-
-	pubKeyData, err := os.ReadFile("keys/public_key.pem")
-	if err != nil {
-		panic(fmt.Sprintf("Failed to load public key: %v", err))
-	}
-
-	block, _ = pem.Decode(pubKeyData)
-	if block == nil || block.Type != "PUBLIC KEY" {
-		panic("Failed to decode PEM block containing public key")
-	}
-
-	pubKeyInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to parse public key: %v", err))
-	}
-
-	publicKey = pubKeyInterface.(*rsa.PublicKey)
-
-	resourceServer = os.Getenv("RESOURCE_SERVER")
-	if resourceServer == "" {
-		resourceServer = "http://localhost:3000/api"
-	}
-
-	identityProvider = os.Getenv("IDENTITY_PROVIDER")
-	if identityProvider == "" {
-		identityProvider = "http://localhost:8080"
-	}
-}
-
-func createAccessToken(clientID string, scopes []string, userID int) (string, error) {
+func (s *Server) createAccessToken(clientID string, scopes []string, userID int) (string, error) {
 	if clientID == "" {
 		return "", fmt.Errorf("client id cannot be empty")
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"aud":   resourceServer,
-		"exp":   time.Now().Add(time.Hour * tokenExpirationTime).Unix(),
+		"aud":   s.RSAConfig.ResourceServer,
+		"exp":   time.Now().Add(s.RSAConfig.TokenExpirationTime).Unix(),
 		"iss":   clientID,
 		"sub":   strconv.Itoa(userID),
 		"scope": scopes,
 	})
 
-	tokenString, err := token.SignedString(privateKey)
+	tokenString, err := token.SignedString(s.RSAConfig.PrivateKey)
 	if err != nil {
 		return "", err
 	}
@@ -119,23 +61,23 @@ func createAccessToken(clientID string, scopes []string, userID int) (string, er
 	return tokenString, nil
 }
 
-func createIDToken(clientID string, user app.User, atHash string) (string, error) {
+func (s *Server) createIDToken(clientID string, user app.User, atHash string) (string, error) {
 	if clientID == "" {
 		return "", fmt.Errorf("client ID cannot be empty")
 	}
 
 	idToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
-		"iss":     identityProvider,
+		"iss":     s.RSAConfig.IdentityProvider,
 		"sub":     strconv.Itoa(user.UserId),
 		"aud":     clientID,
-		"exp":     time.Now().Add(time.Hour * tokenExpirationTime).Unix(),
+		"exp":     time.Now().Add(s.RSAConfig.TokenExpirationTime).Unix(),
 		"iat":     time.Now().Unix(),
 		"name":    user.FirstName,
 		"email":   user.Email,
 		"at_hash": atHash,
 	})
 
-	idTokenString, err := idToken.SignedString(privateKey)
+	idTokenString, err := idToken.SignedString(s.RSAConfig.PrivateKey)
 	if err != nil {
 		return "", err
 	}
@@ -148,7 +90,7 @@ func (s *Server) validateAccessToken(tokenString string, client app.Client) ([]i
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return publicKey, nil
+		return s.RSAConfig.PublicKey, nil
 	})
 
 	if err != nil {
@@ -167,7 +109,7 @@ func (s *Server) validateAccessToken(tokenString string, client app.Client) ([]i
 }
 
 func (s *Server) validateClaims(claims jwt.MapClaims, client app.Client) ([]interface{}, error) {
-	if aud, ok := claims["aud"].(string); !ok || aud != resourceServer {
+	if aud, ok := claims["aud"].(string); !ok || aud != s.RSAConfig.ResourceServer {
 		return nil, fmt.Errorf("invalid audience")
 	}
 
