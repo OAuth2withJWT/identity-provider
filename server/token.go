@@ -2,15 +2,13 @@ package server
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
 	"github.com/golang-jwt/jwt"
 )
-
-const tokenExpirationTime = 30 * 24
-const resourceServer = "http://localhost:3000/api"
 
 type TokenRequest struct {
 	GrantType    string `json:"grant_type"`
@@ -23,6 +21,7 @@ type TokenRequest struct {
 
 type TokenResponse struct {
 	AccessToken string `json:"access_token"`
+	IDToken     string `json:"id_token,omitempty"`
 	TokenType   string `json:"token_type"`
 	ExpiresIn   string `json:"expires_in"`
 }
@@ -41,20 +40,20 @@ type VerificationResponse struct {
 	Scope  []string `json:"scope,omitempty"`
 }
 
-func createToken(clientID string, clientSecret string, scopes []string) (string, error) {
-	if clientID == "" || clientSecret == "" {
-		return "", fmt.Errorf("client id and client secret cannot be empty")
+func (s *Server) createAccessToken(clientID string, scopes []string, userID int) (string, error) {
+	if clientID == "" {
+		return "", fmt.Errorf("client id cannot be empty")
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"aud":   resourceServer,
-		"exp":   time.Now().Add(time.Hour * tokenExpirationTime).Unix(),
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"aud":   s.RSAConfig.ResourceServer,
+		"exp":   time.Now().Add(s.RSAConfig.TokenExpirationTime).Unix(),
 		"iss":   clientID,
-		"sub":   clientID,
+		"sub":   strconv.Itoa(userID),
 		"scope": scopes,
 	})
 
-	tokenString, err := token.SignedString([]byte(clientSecret))
+	tokenString, err := token.SignedString(s.RSAConfig.PrivateKey)
 	if err != nil {
 		return "", err
 	}
@@ -62,12 +61,36 @@ func createToken(clientID string, clientSecret string, scopes []string) (string,
 	return tokenString, nil
 }
 
-func (s *Server) verifyToken(tokenString string, client app.Client) ([]interface{}, error) {
+func (s *Server) createIDToken(clientID string, user app.User, atHash string) (string, error) {
+	if clientID == "" {
+		return "", fmt.Errorf("client ID cannot be empty")
+	}
+
+	idToken := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"iss":     s.RSAConfig.IdentityProvider,
+		"sub":     strconv.Itoa(user.UserId),
+		"aud":     clientID,
+		"exp":     time.Now().Add(s.RSAConfig.TokenExpirationTime).Unix(),
+		"iat":     time.Now().Unix(),
+		"name":    user.FirstName,
+		"email":   user.Email,
+		"at_hash": atHash,
+	})
+
+	idTokenString, err := idToken.SignedString(s.RSAConfig.PrivateKey)
+	if err != nil {
+		return "", err
+	}
+
+	return idTokenString, nil
+}
+
+func (s *Server) validateAccessToken(tokenString string, client app.Client) ([]interface{}, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(client.Secret), nil
+		return s.RSAConfig.PublicKey, nil
 	})
 
 	if err != nil {
@@ -86,7 +109,7 @@ func (s *Server) verifyToken(tokenString string, client app.Client) ([]interface
 }
 
 func (s *Server) validateClaims(claims jwt.MapClaims, client app.Client) ([]interface{}, error) {
-	if aud, ok := claims["aud"].(string); !ok || aud != resourceServer {
+	if aud, ok := claims["aud"].(string); !ok || aud != s.RSAConfig.ResourceServer {
 		return nil, fmt.Errorf("invalid audience")
 	}
 
@@ -130,6 +153,15 @@ func containsAnyScope(tokenScopes []interface{}, requiredScopes []string) bool {
 		}
 	}
 
+	return false
+}
+
+func ContainsScope(scopes []string, targetScope string) bool {
+	for _, scope := range scopes {
+		if scope == targetScope {
+			return true
+		}
+	}
 	return false
 }
 

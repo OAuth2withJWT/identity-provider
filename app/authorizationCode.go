@@ -20,6 +20,7 @@ type AuthorizationCode struct {
 	Expiration          int64
 	CodeChallenge       string
 	CodeChallengeMethod string
+	UserId              int
 }
 
 type AuthorizationCodeService struct {

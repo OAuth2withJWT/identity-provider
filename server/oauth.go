@@ -114,6 +114,9 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessionID := getSessionIDFromCookie(r)
+	session, _ := s.app.SessionService.ValidateSession(sessionID)
+
 	s.app.AuthorizationCodeService.Create(app.AuthorizationCode{
 		Value:               authorizationCode,
 		ClientID:            clientID,
@@ -123,6 +126,7 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 		Expiration:          time.Now().Add(app.AuthorizationCodeExpiration).Unix(),
 		CodeChallenge:       codeChallenge,
 		CodeChallengeMethod: codeChallengeMethod,
+		UserId:              session.UserId,
 	})
 
 	http.Redirect(w, r, redirectURI+"?code="+authorizationCode+"&state="+state, http.StatusFound)
@@ -155,16 +159,23 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scopes, err := s.validateAuthorizationCode(req.Code, req.ClientID, req.RedirectURI)
+	scopes, userId, err := s.validateAuthorizationCode(req.Code, req.ClientID, req.RedirectURI)
 	if err != nil {
 		log.Print("Invalid authorization code")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	token, err := createToken(req.ClientID, req.ClientSecret, scopes)
+	accessToken, err := s.createAccessToken(req.ClientID, scopes, userId)
 	if err != nil {
 		log.Print("Error generating token")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	atHash, err := s.ComputeAtHash(accessToken)
+	if err != nil {
+		log.Print("Error computing at_hash")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -176,9 +187,25 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := TokenResponse{
-		AccessToken: token,
+		AccessToken: accessToken,
 		TokenType:   "Bearer",
-		ExpiresIn:   (time.Hour * time.Duration(tokenExpirationTime)).String(),
+		ExpiresIn:   (time.Duration(s.RSAConfig.TokenExpirationTime)).String(),
+	}
+
+	user, err := s.app.UserService.GetUserByID(userId)
+	if err != nil {
+		http.Error(w, "unauthorized_user", http.StatusUnauthorized)
+		return
+	}
+
+	if ContainsScope(scopes, "openid") {
+		idToken, err := s.createIDToken(req.ClientID, user, atHash)
+		if err != nil {
+			log.Print("Error generating ID token")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		response.IDToken = idToken
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -222,7 +249,7 @@ func (s *Server) handleTokenVerification(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	scopes, err := s.verifyToken(req.Token, client)
+	scopes, err := s.validateAccessToken(req.Token, client)
 	if err != nil {
 		response := VerificationResponse{
 			Active: "false",
