@@ -29,11 +29,21 @@ func LoadRSAConfig() RSAConfig {
 		log.Fatalf("Failed to load public key: %v", err)
 	}
 
+	identityProvider := os.Getenv("IDENTITY_PROVIDER")
+	if identityProvider == "" {
+		log.Fatalf("IDENTITY_PROVIDER environment variable not set")
+	}
+
+	resourceServer := os.Getenv("RESOURCE_SERVER")
+	if resourceServer == "" {
+		log.Fatalf("RESOURCE_SERVER environment variable not set")
+	}
+
 	return RSAConfig{
 		PrivateKey:          privateKey,
 		PublicKey:           publicKey,
-		ResourceServer:      "http://localhost:3000/api",
-		IdentityProvider:    "http://localhost:8080",
+		ResourceServer:      resourceServer,
+		IdentityProvider:    identityProvider,
 		TokenExpirationTime: 24 * time.Hour,
 	}
 }
