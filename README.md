@@ -10,6 +10,17 @@
 
 3. **Configure Environment Variables:** Open the `.env` file in a text editor and fill in the required database connection details, including `DATABASE_NAME`, `DATABASE_USER`, and `DATABASE_PASSWORD`.
 
+### Setup RSA Key Pair
+1. **Create a Keys Directory:** In the root of your project, create a directory named keys.
+
+2. **Generate RSA Key Pair:** Inside the keys directory, generate an RSA key pair with the following commands:
+
+```openssl genpkey -algorithm RSA -out private_key.pem```
+
+```openssl rsa -pubout -in private_key.pem -out public_key.pem```
+
+This will create private_key.pem and public_key.pem files in the keys directory.
+
 ### Setup air live-reload
 
 For detailed instructions on setting up Air for live-reload, please follow the [official documentation](https://github.com/cosmtrek/air).
