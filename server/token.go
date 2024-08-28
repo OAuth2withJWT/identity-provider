@@ -48,7 +48,7 @@ func (s *Server) createAccessToken(clientID string, scopes []string, userID int)
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"aud":   s.RSAConfig.ResourceServer,
 		"exp":   time.Now().Add(s.RSAConfig.TokenExpirationTime).Unix(),
-		"iss":   clientID,
+		"iss":   s.RSAConfig.IdentityProvider,
 		"sub":   strconv.Itoa(userID),
 		"scope": scopes,
 	})
