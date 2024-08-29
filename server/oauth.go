@@ -166,7 +166,7 @@ func (s *Server) handleTokenRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := s.createAccessToken(req.ClientID, scopes, userId)
+	accessToken, err := s.createAccessToken(scopes, userId)
 	if err != nil {
 		log.Print("Error generating token")
 		w.WriteHeader(http.StatusInternalServerError)

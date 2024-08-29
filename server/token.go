@@ -40,11 +40,7 @@ type VerificationResponse struct {
 	Scope  []string `json:"scope,omitempty"`
 }
 
-func (s *Server) createAccessToken(clientID string, scopes []string, userID int) (string, error) {
-	if clientID == "" {
-		return "", fmt.Errorf("client id cannot be empty")
-	}
-
+func (s *Server) createAccessToken(scopes []string, userID int) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
 		"aud":   s.RSAConfig.ResourceServer,
 		"exp":   time.Now().Add(s.RSAConfig.TokenExpirationTime).Unix(),
