@@ -1,34 +1,76 @@
 body {
     font-family: 'Montserrat', sans-serif; 
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
 .container {
     display: flex;
     justify-content: center;
-    height: 100vh;
-    max-width: none;
+    align-items: center;
+    height: 100%;
     padding: 40px;
+}
+
+.form-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .form-container {
     width: 300px; 
-    padding: 5px;
+    padding: 30px;
     background-color: #fff;
     border-radius: 8px;
     box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
-    margin: 50px auto;
     display: flex;
-    flex-direction: column; 
-    padding: 30px;
+    flex-direction: column;
+}
+
+#consent-form {
+    margin: 0 15px;
 }
 
 p {
-    font-weight:500;
-    font-size:16px;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+h3 {
+    font-weight: normal;
+    font-size: 20px;
+    text-align: center;
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 50px;
+    padding: 5px;
+    background-color: #f0f0f0;
+    border-radius: 50px;
+}
+
+.profile-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 5px;
+}
+
+.email {
+    margin: 0;
+    font-weight: 500;
+    font-size: 12px;
 }
 
 .button-container {
-    margin-top: 10px;
+    margin-top: 30px;
     display: flex;
     justify-content: space-between;
 }
@@ -40,14 +82,6 @@ p {
     cursor: pointer;
 }
 
-.btn-allow:hover{
-    background-color: #0056b3;
-}
-
-.btn-deny:hover{
-    color: rgb(194, 10, 10);
-}
-
 .btn-allow {
     color: #fff;
     background-color: #007bff;
@@ -56,4 +90,35 @@ p {
 .btn-deny {
     background-color: #fff;
     color: red;
+}
+
+.btn-allow:hover {
+    background-color: #0056b3;
+}
+
+.btn-deny:hover {
+    color: rgb(194, 10, 10);
+}
+
+ul.scopes-list {
+    padding: 0;
+    margin: 0;
+    list-style-type: none;
+}
+
+ul.scopes-list li {
+    display: flex;
+    align-items: center; 
+    padding: 10px 0;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+}
+
+ul.scopes-list input[type="checkbox"] {
+    margin-right: 10px; 
+    transform: scale(1.1); 
+}
+
+ul.scopes-list label {
+    font-size: 13px; 
 }
