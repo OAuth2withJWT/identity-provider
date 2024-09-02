@@ -5,11 +5,37 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
 	"github.com/OAuth2withJWT/identity-provider/app"
 )
+
+type ScopeData struct {
+	Scope       string
+	Description string
+}
+
+var scopeToDescription = map[string]string{
+	"openid":            "associate you with your personal info",
+	"cards:read":        "read your cards info",
+	"transactions:read": "read your transactions info",
+}
+
+func GetScopeData(scopes []string) []ScopeData {
+	var scopeData []ScopeData
+	for _, scope := range scopes {
+		description, exists := scopeToDescription[scope]
+		if exists {
+			scopeData = append(scopeData, ScopeData{
+				Scope:       scope,
+				Description: description,
+			})
+		}
+	}
+	return scopeData
+}
 
 func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
 	responseType := r.URL.Query().Get("response_type")
@@ -52,13 +78,25 @@ func (s *Server) handleAuthPage(w http.ResponseWriter, r *http.Request) {
 		CodeChallengeMethod: codeChallengeMethod,
 	})
 
+	sessionID := getSessionIDFromCookie(r)
+	session, _ := s.app.SessionService.ValidateSession(sessionID)
+	user, err := s.app.UserService.GetUserByID(session.UserId)
+	if err != nil {
+		http.Error(w, "unauthorized_user", http.StatusUnauthorized)
+		return
+	}
+
 	scopes := strings.Split(client.Scope, ",")
+	scopeData := GetScopeData(scopes)
+
 	data := struct {
 		ClientName string
-		Scopes     []string
+		Scopes     []ScopeData
+		Email      string
 	}{
 		ClientName: client.Name,
-		Scopes:     scopes,
+		Scopes:     scopeData,
+		Email:      user.Email,
 	}
 
 	tmpl, err := template.ParseFiles("views/consent_screen.html")
@@ -104,7 +142,15 @@ func (s *Server) handleAuthForm(w http.ResponseWriter, r *http.Request) {
 	deleteAuthCookie(w)
 
 	if len(scopes) == 0 {
-		http.Redirect(w, r, redirectURI+"?error=access_denied&state="+state, http.StatusFound)
+		parsedURI, err := url.Parse(redirectURI)
+		if err != nil {
+			http.Error(w, "Invalid redirect URI", http.StatusInternalServerError)
+			return
+		}
+
+		rootURI := parsedURI.Scheme + "://" + parsedURI.Host
+
+		http.Redirect(w, r, rootURI, http.StatusFound)
 		return
 	}
 

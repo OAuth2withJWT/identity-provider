@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lag="en">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,13 +12,24 @@
         <div class="form-wrapper">
             <div class="form-container"> 
                 <div style="text-align:center">
-                    <p>{{ .ClientName }} requests access to the following permissions:</p>    
+                    <h3><strong>{{ .ClientName }}</strong> wants to access your account.</h3>  
+                    <div class="profile-info">
+                        <img src="/public/img/profile.png" alt="Profile Icon" class="profile-icon">
+                        <p class="email">{{ .Email }}</p>
+                    </div>
                 </div> 
+
+                <p>Give <strong>{{ .ClientName }}</strong> permission to:</p>    
+
                 <form id="consent-form" method="POST">
-                    {{ range .Scopes }}
-                    <input type="checkbox" id="scope{{ . }}" name="scopes" value="{{ . }}">
-                    <label for="scope{{ . }}"> {{ . }}</label><br>
-                    {{ end }}
+                    <ul class="scopes-list">
+                        {{ range .Scopes }}
+                        <li>
+                            <input type="checkbox" id="scope{{ .Scope }}" name="scopes" value="{{ .Scope }}">
+                            <label for="scope{{ .Scope }}">{{ .Description }}</label>
+                        </li>
+                        {{ end }}
+                    </ul>
                     <div class="button-container">
                         <input type="button" value="Deny" class="btn btn-deny" id="deny-button">
                         <input type="submit" value="Allow" class="btn btn-allow">
